@@ -1,0 +1,97 @@
+"","sampleId","block","N","Species","Year","Location","Concentration.ng.µl","Volume.sampled","Approx..Total.DNA.ng","plate","well","row","column","chip","chipPos","mask"
+"1","BM-019","BM-019",67,"Balaena mysticetus",2022,"Igloolik",17.19,100," 1,719 ",1,1,"A",1,1,1,0
+"2","KW-2021-PG-11","KW-2021-PG-11",52,"Orcinus orca",2021,"Cumberland Sound",26.95,100," 2,695 ",1,2,"A",2,1,2,0
+"3","ARPI-2013-05","ARPI-2013-05",12,"Orcinus orca",2013,"Eclipse Sound",29.9,100," 2,990 ",1,3,"A",3,1,3,0
+"4","BM-041","BM-041",87,"Balaena mysticetus",2022,"Igloolik",34.01,100," 3,401 ",1,4,"A",4,1,4,0
+"5","KW-2021-PG-XX","KW-2021-PG-XX",53,"Orcinus orca",2021,"Cumberland Sound",8.79,50," 440 ",1,5,"A",5,1,5,0
+"6","BM-042","BM-042",88,"Balaena mysticetus",2022,"Igloolik",21.68,100," 2,168 ",1,6,"A",6,1,6,0
+"7","BM-034","BM-034",80,"Balaena mysticetus",2022,"Igloolik",20.42,100," 2,042 ",1,7,"A",7,1,1,0
+"8","BM-027","BM-027",75,"Balaena mysticetus",2022,"Igloolik",15.31,100," 1,531 ",1,8,"A",8,1,2,0
+"9","GRNL-KW-2021-02","GRNL-KW-2021-02",41,"Orcinus orca",2021,"Greenland",11.26,50," 563 ",1,9,"A",9,1,3,0
+"10","OR21-3","OR21-3",45,"Orcinus orca",2021,"Saint Pierre et Miquelon",39,50," 1,950 ",1,10,"A",10,1,4,0
+"11","BM-049","BM-049",95,"Balaena mysticetus",2022,"Igloolik",51.05,100," 5,105 ",1,11,"A",11,1,5,0
+"12","ARPI-2019-06","ARPI-2019-06",32,"Orcinus orca",2019,"Eclipse Sound",36.95,100," 3,695 ",1,12,"A",12,1,6,0
+"13","BM-006","BM-006",57,"Balaena mysticetus",2022,"Igloolik",17.48,100," 1,748 ",1,13,"B",1,2,1,0
+"14","ARPI-2019-08","ARPI-2019-08",34,"Orcinus orca",2019,"Eclipse Sound",21.6,100," 2,160 ",1,14,"B",2,2,2,0
+"15","BM-021","BM-021",69,"Balaena mysticetus",2022,"Igloolik",56.39,100," 5,639 ",1,15,"B",3,2,3,0
+"16","ARPI-2013-07","ARPI-2013-07",14,"Orcinus orca",2013,"Eclipse Sound",6.535,100," 654 ",1,16,"B",4,2,4,0
+"17","BM-037","BM-037",83,"Balaena mysticetus",2022,"Igloolik",23.59,100," 2,359 ",1,17,"B",5,2,5,0
+"18","BM-018","BM-018",66,"Balaena mysticetus",2022,"Igloolik",18.62,100," 1,862 ",1,18,"B",6,2,6,0
+"19","KW-2019-01","KW-2019-01",38,"Orcinus orca",2019,"Saint Pierre et Miquelon",3.9,100," 390 ",1,19,"B",7,2,1,0
+"20","KW-2019-02","KW-2019-02",39,"Orcinus orca",2019,"Saint Pierre et Miquelon",109.2,100," 10,920 ",1,20,"B",8,2,2,0
+"21","OR21-2","OR21-2",44,"Orcinus orca",2021,"Saint Pierre et Miquelon",62.3,100," 6,230 ",1,21,"B",9,2,3,0
+"22","BM-040","BM-040",86,"Balaena mysticetus",2022,"Igloolik",26.27,100," 2,627 ",1,22,"B",10,2,4,0
+"23","ARPI-2018-13","ARPI-2018-13",21,"Orcinus orca",2018,"Eclipse Sound",18.03,100," 1,803 ",1,23,"B",11,2,5,0
+"24","BM-023","BM-023",71,"Balaena mysticetus",2022,"Igloolik",52.05,100," 5,205 ",1,24,"B",12,2,6,0
+"25","KW-2021-PG-05","KW-2021-PG-05",48,"Orcinus orca",2021,"Cumberland Sound",46.13,100," 4,613 ",1,25,"C",1,3,1,0
+"26","48336","48336",1,"Orcinus orca",2012,"Greenland",73.68,50," 3,684 ",1,26,"C",2,3,2,0
+"27","BM-047","BM-047",93,"Balaena mysticetus",2022,"Igloolik",35.51,100," 3,551 ",1,27,"C",3,3,3,0
+"28","48342","48342",6,"Orcinus orca",2012,"Greenland",47.99,50," 2,400 ",1,28,"C",4,3,4,0
+"29","ARPI-2013-01","ARPI-2013-01",8,"Orcinus orca",2013,"Eclipse Sound",4.77,100," 477 ",1,29,"C",5,3,5,0
+"30","ARPI-2019-04","ARPI-2019-04",30,"Orcinus orca",2019,"Eclipse Sound",30.51,100," 3,051 ",1,30,"C",6,3,6,0
+"31","BM-025","BM-025",73,"Balaena mysticetus",2022,"Igloolik",28.67,100," 2,867 ",1,31,"C",7,3,1,0
+"32","ARPI-2013-04","ARPI-2013-03",11,"Orcinus orca",2013,"Eclipse Sound",14.63,100," 1,463 ",1,32,"C",8,3,2,0
+"33","ARPI-2013-03","ARPI-2013-03",10,"Orcinus orca",2013,"Eclipse Sound",10.26,100," 1,026 ",1,33,"C",9,3,3,0
+"34","KW-2021-PG-06","KW-2021-PG-06",49,"Orcinus orca",2021,"Cumberland Sound",27.77,100," 2,777 ",1,34,"C",10,3,4,0
+"35","ARPI-2018-16","ARPI-2018-15",24,"Orcinus orca",2018,"Eclipse Sound",14.92,100," 1,492 ",1,35,"C",11,3,5,0
+"36","ARPI-2018-15","ARPI-2018-15",23,"Orcinus orca",2018,"Eclipse Sound",19.83,100," 1,983 ",1,36,"C",12,3,6,0
+"37","BM-044","BM-044",90,"Balaena mysticetus",2022,"Igloolik",38.76,100," 3,876 ",1,37,"D",1,4,1,0
+"38","BM-017","BM-017",65,"Balaena mysticetus",2022,"Igloolik",24.51,100," 2,451 ",1,38,"D",2,4,2,0
+"39","ARPI-2019-10","ARPI-2019-10",36,"Orcinus orca",2019,"Eclipse Sound",4.304,100," 430 ",1,39,"D",3,4,3,0
+"40","KW-2021-PG-08","KW-2021-PG-08",50,"Orcinus orca",2021,"Cumberland Sound",11.37,100," 1,137 ",1,40,"D",4,4,4,0
+"41","BM-009","BM-009",58,"Balaena mysticetus",2022,"Igloolik",21.78,100," 2,178 ",1,41,"D",5,4,5,0
+"42","BM-026","BM-026",74,"Balaena mysticetus",2022,"Igloolik",20.49,100," 2,049 ",1,42,"D",6,4,6,0
+"43","ARPI-2018-06","ARPI-2018-06",19,"Orcinus orca",2018,"Eclipse Sound",7.497,100," 750 ",1,43,"D",7,4,1,0
+"44","ARPI-2019-09","ARPI-2019-09",35,"Orcinus orca",2019,"Eclipse Sound",32.85,100," 3,285 ",1,44,"D",8,4,2,0
+"45","BM-013","BM-013",62,"Balaena mysticetus",2022,"Igloolik",27.14,100," 2,714 ",1,45,"D",9,4,3,0
+"46","KW-2021-PG-04","KW-2021-PG-04",47,"Orcinus orca",2021,"Cumberland Sound",5.283,100," 528 ",1,46,"D",10,4,4,0
+"47","BM-014","BM-014",63,"Balaena mysticetus",2022,"Igloolik",28.67,100," 2,867 ",1,47,"D",11,4,5,0
+"48","ARPI-2013-06","ARPI-2013-06",13,"Orcinus orca",2013,"Eclipse Sound",5.627,100," 563 ",1,48,"D",12,4,6,0
+"49","BM-050","BM-050",96,"Balaena mysticetus",2022,"Igloolik",41.24,100," 4,124 ",1,49,"E",1,5,1,0
+"50","GRNL-KW-2021-03","GRNL-KW-2021-03",42,"Orcinus orca",2021,"Greenland",5.279,100," 528 ",1,50,"E",2,5,2,0
+"51","ARPG-2013-01","ARPG-2013-01",7,"Orcinus orca",2013,"Cumberland Sound",36.3,100," 3,630 ",1,51,"E",3,5,3,0
+"52","ARPI-2018-18","ARPI-2018-18",26,"Orcinus orca",2018,"Eclipse Sound",26.99,100," 2,699 ",1,52,"E",4,5,4,0
+"53","BM-038","BM-038",84,"Balaena mysticetus",2022,"Igloolik",55.65,100," 5,565 ",1,53,"E",5,5,5,0
+"54","BM-022","BM-022",70,"Balaena mysticetus",2022,"Igloolik",44.98,100," 4,498 ",1,54,"E",6,5,6,0
+"55","ARPI-2018-10","ARPI-2018-10",20,"Orcinus orca",2018,"Eclipse Sound",12.6,100," 1,260 ",1,55,"E",7,5,1,0
+"56","ARPI-2018-14","ARPI-2018-10",22,"Orcinus orca",2018,"Eclipse Sound",17.81,100," 1,781 ",1,56,"E",8,5,2,0
+"57","BM-043","BM-043",89,"Balaena mysticetus",2022,"Igloolik",46.64,100," 4,664 ",1,57,"E",9,5,3,0
+"58","BM-032","BM-032",78,"Balaena mysticetus",2022,"Igloolik",13.53,100," 1,353 ",1,58,"E",10,5,4,0
+"59","48341","48341",5,"Orcinus orca",2012,"Greenland",72.46,50," 3,623 ",1,59,"E",11,5,5,0
+"60","OR21-1","OR21-1",43,"Orcinus orca",2021,"Saint Pierre et Miquelon",3.29,150," 494 ",1,60,"E",12,5,6,0
+"61","BM-036","BM-036",82,"Balaena mysticetus",2022,"Igloolik",16.94,100," 1,694 ",1,61,"F",1,6,1,0
+"62","ARPI-2018-05 ","ARPI-2018-05 ",18,"Orcinus orca",2018,"Eclipse Sound",31.11,100," 3,111 ",1,62,"F",2,6,2,0
+"63","ARPI-2018-03 ","ARPI-2018-03 ",17,"Orcinus orca",2018,"Eclipse Sound",33.95,100," 3,395 ",1,63,"F",3,6,3,0
+"64","BM-011","BM-011",60,"Balaena mysticetus",2022,"Igloolik",31.19,100," 3,119 ",1,64,"F",4,6,4,0
+"65","BM-024","BM-024",72,"Balaena mysticetus",2022,"Igloolik",17.12,100," 1,712 ",1,65,"F",5,6,5,0
+"66","KW-Nfld-22-25","KW-Nfld-22-25",55,"Orcinus orca",2022,"Newfoundland",19.12,100," 1,912 ",1,66,"F",6,6,6,0
+"67","BM-012","BM-012",61,"Balaena mysticetus",2022,"Igloolik",26.88,100," 2,688 ",1,67,"F",7,6,1,0
+"68","KW-2021-PG-03","KW-2021-PG-03",46,"Orcinus orca",2021,"Cumberland Sound",15.05,100," 1,505 ",1,68,"F",8,6,2,0
+"69","KW-2022-PI-01","KW-2022-PI-01",54,"Orcinus orca",2022,"Eclipse Sound",3.366,150," 505 ",1,69,"F",9,6,3,0
+"70","ARPI-2013-02","ARPI-2013-02",9,"Orcinus orca",2013,"Eclipse Sound",5.959,100," 596 ",1,70,"F",10,6,4,0
+"71","BM-045","BM-045",91,"Balaena mysticetus",2022,"Igloolik",34.64,100," 3,464 ",1,71,"F",11,6,5,0
+"72","GRNL-KW-2021-01","GRNL-KW-2021-01",40,"Orcinus orca",2021,"Greenland",9.187,100," 919 ",1,72,"F",12,6,6,0
+"73","ARPI-2019-03 ","ARPI-2019-03 ",29,"Orcinus orca",2019,"Eclipse Sound",27.45,100," 2,745 ",1,73,"G",1,7,1,0
+"74","ARPI-2019-05","ARPI-2019-03 ",31,"Orcinus orca",2019,"Eclipse Sound",76.74,100," 7,674 ",1,74,"G",2,7,2,0
+"75","BM-039","BM-039",85,"Balaena mysticetus",2022,"Igloolik",33.25,100," 3,325 ",1,75,"G",3,7,3,0
+"76","BM-035","BM-035",81,"Balaena mysticetus",2022,"Igloolik",30.27,100," 3,027 ",1,76,"G",4,7,4,0
+"77","BM-020","BM-020",68,"Balaena mysticetus",2022,"Igloolik",19.93,100," 1,993 ",1,77,"G",5,7,5,0
+"78","ARPI-2018-02 ","ARPI-2018-02 ",16,"Orcinus orca",2018,"Eclipse Sound",12.11,100," 1,211 ",1,78,"G",6,7,6,0
+"79","ARPI-2018-17 ","ARPI-2018-02 ",25,"Orcinus orca",2018,"Eclipse Sound",44.23,100," 4,423 ",1,79,"G",7,7,1,0
+"80","BM-033","BM-033",79,"Balaena mysticetus",2022,"Igloolik",33.32,100," 3,332 ",1,80,"G",8,7,2,0
+"81","KW-2021-PG-09","KW-2021-PG-09",51,"Orcinus orca",2021,"Cumberland Sound",25.36,100," 2,536 ",1,81,"G",9,7,3,0
+"82","BM-005","BM-005",56,"Balaena mysticetus",2022,"Igloolik",22.35,100," 2,235 ",1,82,"G",10,7,4,0
+"83","BM-028","BM-028",76,"Balaena mysticetus",2022,"Igloolik",33.25,100," 3,325 ",1,83,"G",11,7,5,0
+"84","ARPI-2019-11","ARPI-2019-11",37,"Orcinus orca",2019,"Eclipse Sound",20.03,100," 2,003 ",1,84,"G",12,7,6,0
+"85","BM-015","BM-015",64,"Balaena mysticetus",2022,"Igloolik",23.52,100," 2,352 ",1,85,"H",1,8,1,0
+"86","48338","48338",3,"Orcinus orca",2012,"Greenland",70.83,50," 3,542 ",1,86,"H",2,8,2,0
+"87","ARPI-2018-01","ARPI-2018-01",15,"Orcinus orca",2018,"Eclipse Sound",21.93,100," 2,193 ",1,87,"H",3,8,3,0
+"88","48337","48337",2,"Orcinus orca",2012,"Greenland",136.3,50," 6,815 ",1,88,"H",4,8,4,0
+"89","48339","48339",4,"Orcinus orca",2012,"Greenland",85.42,50," 4,271 ",1,89,"H",5,8,5,0
+"90","ARPI-2019-02","ARPI-2019-02",28,"Orcinus orca",2019,"Eclipse Sound",45.71,100," 4,571 ",1,90,"H",6,8,6,0
+"91","ARPI-2019-01","ARPI-2019-01",27,"Orcinus orca",2019,"Eclipse Sound",40.78,100," 4,078 ",1,91,"H",7,8,1,0
+"92","BM-031","BM-031",77,"Balaena mysticetus",2022,"Igloolik",15.61,100," 1,561 ",1,92,"H",8,8,2,0
+"93","BM-010","BM-010",59,"Balaena mysticetus",2022,"Igloolik",18.52,100," 1,852 ",1,93,"H",9,8,3,0
+"94","ARPI-2019-07","ARPI-2019-07",33,"Orcinus orca",2019,"Eclipse Sound",21.67,100," 2,167 ",1,94,"H",10,8,4,0
+"95","BM-046","BM-046",92,"Balaena mysticetus",2022,"Igloolik",31.32,100," 3,132 ",1,95,"H",11,8,5,0
+"96","BM-048","BM-048",94,"Balaena mysticetus",2022,"Igloolik",69.13,100," 6,913 ",1,96,"H",12,8,6,0
