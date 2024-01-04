@@ -1,0 +1,240 @@
+---
+title: "Killer whale Clock"
+author: "Caila Kucheravy"
+date: "`r Sys.Date()`"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+Run the killer whale skin clock developed by Parsons et al. (2023). 
+
+Prep: 
+```{r, message = FALSE, results = 'hide'}
+setwd("~/Documents/Master's/Analysis/Epigenetic Aging/Killer Whales")
+
+library(tidyverse)
+library(glmnet)
+```
+
+Load updated sample sheet:
+```{r}
+sample_sheet <- readRDS('output/updated_sample_sheet_combined_KillerWhale_array.rds') 
+```
+
+Load the killer whale skin clock, select the correct columns and filter out NAs to have only CpGs used in the clock: 
+```{r, message = FALSE, results = 'hide'}
+clock <- read_csv('input/Table.WhaleS3.SkinClockCoef.csv')
+
+kw_clock <- clock %>% 
+  select(var, Coef.Killerwhale.Skin.Sqrt) %>%      # Select the correct column for the KW clock 
+  filter(!is.na(Coef.Killerwhale.Skin.Sqrt))       # Filter out CpGs not used for this clock (50 CpGs)
+```
+
+Load normalized beta values: 
+```{r}
+kw_betas <- readRDS('output/tbetas_corrected_combined_KillerWhale_array.rds')
+
+# Filter for CpGs used in clock - 50 for killer whales
+kw_betas_filtered <- kw_betas %>% 
+  select(any_of(kw_clock$var))
+```
+
+The age transformation used in the paper is: sqrt(Age+1)=Age. Need to back-transform for final age.
+
+Form a weighted linear combination of the CpGs for killer whales: 
+```{r}
+# Pivot clock wider to match beta table 
+kw_clock_wide <- kw_clock %>% 
+  pivot_wider(names_from = var, values_from = Coef.Killerwhale.Skin.Sqrt)
+
+# Multiply beta values by the clock weights:
+est_ages_kw <- data.frame(mapply('*', kw_betas_filtered, kw_clock_wide[,2:51])) 
+
+# Sum values, add intercept
+est_ages_kw <- est_ages_kw %>% 
+  mutate(Sum = rowSums(est_ages_kw)) %>% 
+  mutate(Intercept = kw_clock_wide$`(Intercept)`) 
+
+# Sum intercept and weighted beta values
+est_ages_kw <- est_ages_kw %>%
+  mutate(Ages = rowSums(est_ages_kw[,c("Sum", "Intercept")]))
+
+# Age transformation: DNAmAge = F^(-1) (x*beta)
+est_ages_kw <- est_ages_kw %>%
+  mutate(Age_Transformed = (est_ages_kw$Ages^2) - 1)
+
+est_ages_kw$Age_Transformed
+```
+
+Add ages to sample sheet:
+```{r}
+# Add column with basename back to dataframe with ages
+est_ages_kw$chip.ID.loc <- sample_sheet$chip.ID.loc    
+
+# Select chip ID and ages to join with sample sheet
+DNAm_ages_kw <- est_ages_kw %>%                         
+  select(chip.ID.loc, Age_Transformed)
+
+# Join ages with sample sheet
+kw_ages <- sample_sheet %>%             
+  left_join(DNAm_ages_kw, by = "chip.ID.loc")
+```
+
+Take a look at the duplicates:
+```{r}
+# Note that KW-2019-06 was a technical replicate (from the same DNA sample), while the others were from different skin samples of the same whale. 
+duplicates <- kw_ages %>% 
+  arrange(block) %>% 
+  group_by(block) %>%
+  filter(n() > 1)
+duplicates
+```
+
+Most of the ages estimate for duplicate samples are quite close, but some of the recaptures don't reflect the difference in age between captures.
+
+We also have a few known-age individuals. Unfortunately, two of the known-age individuals (ARSQ-xx-1379, 34yo and KW-CH-2011, 35 yo) had to be removed in the quality control stage.
+
+We can compare the DNAm estimated age to the known age (determined from GLGs):
+```{r}
+known_ages <- data.frame(
+  sampleId = c("ARRB-xx-1291", "ARSQ-xx-1397", "KW-2022-PI-01"),
+  Known_Age = c(28, 6, "In progress")
+)
+
+est_ages <- kw_ages %>% 
+  select(sampleId, Age_Transformed) %>% 
+  filter(sampleId %in% c("ARRB-xx-1291", "ARSQ-xx-1397", "KW-2022-PI-01"))
+
+compare_known_ages <- known_ages %>% 
+  left_join(est_ages, by = "sampleId") 
+compare_known_ages
+```
+
+Remove the duplicates and add the difference between year and 2022:
+```{r}
+# Taking the first age for now - but might want to take average or something for final ages.
+kw_ages_dupsRemoved <- kw_ages %>% 
+  mutate(duplicate = duplicated(block)) %>% 
+  filter(!duplicate == "TRUE")
+
+# Add the difference in years so that the age structure represents what it would be in 2022:
+kw_ages_dupsRemoved <- kw_ages_dupsRemoved %>% 
+  select(!duplicate) %>% 
+  mutate(diffYear = 2022 - kw_ages_dupsRemoved$Year) %>% 
+  mutate(adj_age = Age_Transformed + diffYear)
+
+#Write the age file to csv: 
+#write.csv(kw_ages_dupsRemoved, "kw_ages.csv")
+
+# Keep only Cumberland Sound & Northern Baffin Island samples ("High Arctic" group):
+Locations <- c("Cumberland Sound", "Eclipse Sound", "Newfoundland", "Saint Pierre et Miquelon")
+
+kw_ages_HA <- kw_ages_dupsRemoved %>% 
+  filter(Location %in% Locations) %>% 
+  # And the one 2013 CS sample that grouped with the Greenland samples
+  filter(!sampleId == "ARPG-2013-01")
+```
+
+Plot the data (unadjusted age):
+```{r}
+cols <- c("tomato3", "steelblue3")
+
+ggplot(kw_ages_dupsRemoved, aes(x = Age_Transformed, fill = Sex)) + 
+  geom_histogram() +
+  xlab("DNAm Age") +
+  #scale_x_continuous("DNAm Age", limits = c(0,55), breaks = c(0,5,10,15,20,25,30,35,40,45,50,55)) + 
+  scale_fill_manual(values = cols, 
+                      labels = c("Female", "Male")) + 
+  theme_bw() + 
+  theme(axis.text = element_text(size=14),
+        axis.title = element_text(size=18),
+        legend.title = element_blank(),
+        legend.text = element_text(size = 14),
+        legend.position = c(0.82,0.8),
+        legend.background = element_blank())
+```
+
+```{r}
+males <- kw_ages_dupsRemoved %>% 
+  filter(Sex == "M")
+females <- kw_ages_dupsRemoved %>% 
+  filter(Sex == "F")
+
+g <- ggplot() + 
+  geom_histogram( data = females,
+    aes(x = Age_Transformed, y = after_stat(count)),
+    fill="tomato3") + 
+  geom_histogram( data = males,
+    aes(x = Age_Transformed, y = -after_stat(count)), 
+    fill= "steelblue") + 
+  theme_bw()
+
+#tiff("Age_Distribution_2.tiff", units="in", width=8, height=5, res=400)
+
+g + 
+  coord_flip() + 
+  xlab("DNAm Age") +
+  #scale_x_continuous(limits = c(0,55), breaks = c(0,10,20,30,40,50)) + 
+  #scale_y_continuous("DNAm Age", limits = c(-5,5), breaks = c(-5,-3,-1,1,3,5))
+  theme(axis.text = element_text(size=14),
+        axis.title = element_text(size=16))
+
+#dev.off()
+```
+
+Plot the data (adjusted 2022 age):
+```{r}
+#tiff("age_structure_no.calves.tiff", units="in", width=6, height=4, res=500)
+
+ggplot(kw_ages_HA, aes(x = adj_age, fill = Sex)) + 
+  geom_histogram() +
+  xlab("DNAm Age") +
+  #scale_x_continuous("DNAm Age", limits = c(0,55), breaks = c(0,5,10,15,20,25,30,35,40,45,50,55)) + 
+  scale_fill_manual(values = cols, 
+                      labels = c("Female", "Male")) + 
+  theme_bw() + 
+  theme(axis.text = element_text(size=14),
+        axis.title = element_text(size=18),
+        legend.title = element_blank(),
+        legend.text = element_text(size = 14),
+        legend.position = c(0.82,0.8),
+        legend.background = element_blank())
+
+#dev.off()
+```
+
+Summarize data: 
+```{r}
+males <- kw_ages_dupsRemoved %>% 
+  filter(Sex == "M")
+
+females <- kw_ages_dupsRemoved %>% 
+  filter(Sex == "F")
+
+length(males$Age_Transformed)
+summary(males$Age_Transformed)
+summary(males$adj_age)
+
+length(females$Age_Transformed)
+summary(females$Age_Transformed)
+summary(females$adj_age)
+
+# Juveniles
+kw_ages_dupsRemoved %>% 
+  dplyr::count(adj_age < 10)
+24/76
+
+# Reproductive adults
+kw_ages_dupsRemoved %>% 
+  dplyr::count(adj_age < 35)
+(75-24)/76
+
+# Post-reproductive adults
+kw_ages_dupsRemoved %>% 
+  dplyr::count(adj_age > 35)
+1/76
+```
+
+
+
