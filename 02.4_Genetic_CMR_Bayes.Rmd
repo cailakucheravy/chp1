@@ -1,0 +1,181 @@
+---
+title: "01.2_PhotoID_CMR_Bayes"
+date: "`r Sys.Date()`"
+---
+
+Here, we will re-analyze the photo-ID CMR data using a Bayesian framework, as described in Marc and Kéry (2011).
+
+The script was obtained from https://github.com/oliviergimenez/bayes-multistate-jollyseber, modified for these data.
+
+Prep the environment: 
+```{r, include = FALSE}
+#rm(list=ls())
+
+setwd("~/Documents/Master's/Analysis/CMR")
+
+library(tidyverse)
+library(rjags)
+library(RMark)
+library(R2jags)
+library(R2ucare)
+```
+
+See 02.2_PhotoID_CMR_Bayes for description of model.
+
+POPAN parameterization of data:
+```{r}
+popan <- function() {
+ 
+   # Priors and constraints
+  for (i in 1:M){
+    for (t in 1:(n.occasions-1)){
+      phi[i,t] <- mean.phi  # Constant survival 
+    } #t
+    for (t in 1:n.occasions){
+      p[i,t] <- p.time[t]  # Time-dependent capture
+    } #t
+  } #i
+  
+  mean.phi ~ dunif(0, 1)  # Prior for mean survival - uniform distribution with min = 0 and max = 1
+  #mean.phi ~ dnorm(0.8, 0.3)  # Prior for mean survival - normal distribution with mean = 0.8, sd = 0.3
+  psi ~ dunif(0, 1) # Prior for inclusion probability
+  
+  for(t in 1:n.occasions) {
+    p.time[t] ~ dunif(0,1)  # prior for time-dependent capture
+  }
+  
+  # Dirichlet prior for entry probabilities
+  for (t in 1:n.occasions){
+    beta[t] ~ dgamma(1, 1)  # gamma distribution with shape = 1 and scale = 1
+    b[t] <- beta[t] / sum(beta[1:n.occasions])
+  }
+  
+  # Convert entry probs to conditional entry probs
+  nu[1] <- b[1]
+  for (t in 2:n.occasions){
+    nu[t] <- b[t] / (1 - sum(b[1:(t-1)]))
+  } #t
+  
+  # Likelihood
+  for (i in 1:M){
+    # First occasion
+    # State process
+    w[i] ~ dbern(psi)  # Draw latent inclusion
+    z[i,1] ~ dbern(nu[1])
+    # Observation process
+    mu1[i] <- z[i,1] * p[i,1] * w[i]
+    y[i,1] ~ dbern(mu1[i])
+    # Subsequent occasions
+    for (t in 2:n.occasions){
+      # State process
+      q[i,t-1] <- 1 - z[i,t-1]
+      mu2[i,t] <- phi[i,t-1] * z[i,t-1] + nu[t] * prod(q[i,1:(t-1)])
+      z[i,t] ~ dbern(mu2[i,t])
+      # Observation process
+      mu3[i,t] <- z[i,t] * p[i,t] * w[i]
+      y[i,t] ~ dbern(mu3[i,t])
+    } #t
+  } #i
+  
+  # Calculate derived population parameters
+  for (i in 1:M){
+    for (t in 1:n.occasions){
+      u[i,t] <- z[i,t] * w[i]  # Deflated latent state (u)
+    }
+  }
+  for (i in 1:M){
+    recruit[i,1] <- u[i,1]
+    for (t in 2:n.occasions){
+      recruit[i,t] <- (1 - u[i,t-1]) * u[i,t]
+    } #t
+  } #i
+  for (t in 1:n.occasions){
+    N[t] <- sum(u[1:M,t])  # Actual population size
+    B[t] <- sum(recruit[1:M,t])  # Number of entries
+  } #t
+  for (i in 1:M){
+    Nind[i] <- sum(u[i,1:n.occasions])
+    Nalive[i] <- 1 - equals(Nind[i], 0)
+  } #i
+  for (t in 1:(n.occasions-2)) {
+    lambda[t] <- N[t+1]/N[t] # Pradel-Lambda realized population growth rate
+    f[t] <- B[t+1]/N[t] # recruitment (per capita entry) rate
+  } #t
+  Nsuper <- sum(Nalive[]) # Superpopulation size
+  mean.lambda <- mean(lambda[]) # mean realized growth rate
+}
+```
+
+Now let's apply it to our data. 
+
+Ungroup the data:
+```{r}
+ch_CMR_gen <- import.chdata("_genetic_CMR_data.txt")
+popan_ch_gen <- splitCH(ch_CMR_gen$ch)
+```
+
+Augment the observed capture histories by nz pseudo-individuals, all with capture histories of 0: 
+```{r}
+nz <- 200     # Augmenting the data by 200 pseudo-individuals
+CH.aug.gen <- rbind(popan_ch_gen, matrix(0, ncol = dim(popan_ch_gen)[2], nrow = nz))
+```
+
+Bundle data.
+```{r}
+bugs.data.gen <- list(y = CH.aug.gen, 
+                      n.occasions = dim(CH.aug.gen)[2], 
+                      M = dim(CH.aug.gen)[1])
+
+# Would often get an error for "Invalid parent values" - this is  fix for that. 
+bugs.data.gen$y[1] <- 1
+```
+
+Initial values.
+```{r}
+zinit <- CH.aug.gen
+zinit[zinit==0] <- 1
+
+n.occasions.js <- ncol(CH.aug.gen)
+
+inits <- function(){list(mean.phi = runif(1, 0, 1), 
+                         p.time = runif(n.occasions.js, 0, 1), 
+                         psi = runif(1, 0, 1), 
+                         z = zinit)}
+```
+
+Parameters monitored.
+```{r}
+parameters <- c("psi", "p.time", "mean.phi", "b", "Nsuper", "N", "B", "nu", "lambda", "f", "mean.lambda")
+```
+
+MCMC settings.
+```{r}
+n.iter   <- 10000     # Number of iterations
+n.burnin <- 2000      # Number discarded (burn-in)
+n.chains <- 3         # Number of chains
+```
+
+Call Jags.
+```{r}
+kw_popan_gen <- R2jags::jags(data  = bugs.data.gen,
+                     inits = inits,
+                     parameters.to.save = parameters,
+                     model.file = popan,
+                     n.chains = n.chains,
+                     n.iter = n.iter,
+                     n.burnin = n.burnin)
+kw_popan_gen
+```
+
+```{r}
+library(mcmcplots)
+kw_popan.mcmc <- as.mcmc(kw_popan_gen)
+
+# Traceplot
+mcmcplots::traplot(kw_popan.mcmc, parms = "Nsuper", "deviance", "mean.p", "mean.phi")
+
+# Density plot
+mcmcplots::denplot(kw_popan.mcmc, parms = "Nsuper", "deviance")
+```
+
+

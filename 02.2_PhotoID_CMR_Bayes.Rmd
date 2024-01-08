@@ -1,0 +1,270 @@
+---
+title: "01.2_PhotoID_CMR_Bayes"
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+
+Here, we will re-analyze the photo-ID CMR data using a Bayesian hierarchichal state-space framework, as described in Kéry and Schaub (2011). See script 02.1_PhotoID_CMR for discussion of POPAN JS CMR assumptions.
+
+The script was obtained from https://github.com/oliviergimenez/bayes-multistate-jollyseber, modified for these data.
+
+Prep the environment: 
+```{r, include = FALSE}
+rm(list=ls())
+
+setwd("~/Documents/Master's/Analysis/CMR")
+
+library(tidyverse)
+library(rjags)
+library(RMark)
+library(R2jags)
+library(R2ucare)
+```
+
+## State-Space JS Model 
+*Notes from Kéry and Schaub (2011)*
+
+In this model, the observed capture-recapture data are described as the result of a state process (the ecological process) and the observation process, which depends on the result of the state process.
+
+*N_s* = superpopulation size (the number of individuals ever alive during the study)
+*b_t* = entry probability (the probability that a member of *N_s* enters the population at occasion t - could result from either birth or immigration)
+*B_t* = *N_s*x*bt* = number of individuals entering the population at t
+  - The number of individuals entering at each occasion can be modeled with a multinomial distribution as **B** ~ multinomial(Nsuper, **b**).
+  
+We denote the latent (hidden) state of individual *i* at occasion *t* as *z_{i,t}* = 1 if it is alive and present in the population, and *z_{i,t}* = 0 if it is either dead or has not yet entered the population. On entry, the survival process starts. The latent state *z_{i,t+1}* at *t* + 1 is determined by a Bernoulli trial (two possible outcomes: success (detection) or failure (no detection)) with success probability $\phi$_{i,t} (*t* = 1,...,*T*-1). 
+
+The entry and survival process, described above, represent the latent state process. The observation process is defined for individuals that are alive (*z* = 1). The detection of individual *i* at time *t* is determined by another Bernoulli trial.
+
+![State and Observation Process](process.png)
+
+The resulting capture-recapture data consists of the capture histories of *n* individuals. Typically not all individuals in a population are capture (capture probability <1), so *n* < *N_s*. If *N_s* were known, the capture-recapture data would contain an additional *N_s*-*n* all-zero capture histories, but *N_s* is unknown. Parameters such as entry and capture probabilities refer to *N_s*, not just *n*. To deal with this, we use parameter-expanded data augmentation. This fixes the dimension of the parameter space in the analysis by augmenting the observed data with a large number of all-zero capture histories, resulting in a larger data set of fixed dimension *M*, and to analyze the augmented data set using a reparameterized (zero-inflated) version of the model that would be applied if *N_s* were known.
+
+![Data augmentation](augmented.png)
+
+#### Superpopulation parameterization 
+
+*b* = entry probability 
+$\psi$ = inclusion parameter
+
+To keep the sequential specification of the state process model, we reexpress the entry probabilities (*b*) as conditional entry probablities ($\eta$).
+
+The state of individual *i* at the first occasion is: 
+$$
+z_{i,1} \sim Bernoulli(\eta_1)
+$$
+
+Subsequent states are determined either by survival (for an individual already entered, *z_{i,t}* = 1) or by an entry for one that has not (*z_{i,t}* = 0):
+
+$$
+z_{i,t+1} | z_{i,t},...,z_{i,1} \sim Bernoulli(z_{i,t} \phi_{i,t} + \eta_{t+1} \prod_{k=1}^{t} (1 - z_{i,k}))
+$$
+
+For the observation process, we suppose that each individual of *M* has an associated latent variable *w_i* ~ Bernoulli($\psi$). Individuals with *w_i* = 1 are exposed to sampling if alive, while individuals with *w_i* = 0 are not exposed to sampling. The observation model (which admits zero-inflation) is: 
+
+$$ 
+y_{i,t} | z_{i,t} \sim Bernoulli(w_i z_{i.t} p_{i.t}) 
+$$
+
+We need to specify priors for survival, capture, entry, and inclusion probabilities. To express ignorance, specify a uniform prior U(0,1) on all of them. However, for entry probability (*b*) we use a Dirichlet prior (multinomial generalization of the beta distribution): *b_t* ~ Dirichlet($\alpha$), where . $\alpha$_t = 1 for all *t* (this allocates the entries of all individuals uniformly over the *T* occasions). The U(0,1) prior for inclusions probability $\psi$ induces a discrete U(0,*M*) prior for the superpopulation size *N_s*.
+
+## Application
+Now we can build our model using the superpopulation parameterization of JS in a Bayesian framework.
+
+Note that in model described in the book, they use constant survival ($\phi$), constant capture (*p*), and time-dependent entry (*b*) - this is different than the AIC suggested to be the best fit in the frequentist analysis (constant survival, time-dependent capture, constant entry). The second best model (($\delta$)AIC = 1.3) had constant survival, time-dependent capture, and time-dependent entry, which is how we will parameterize the model here.  
+
+We have modified the original code obtained from https://github.com/oliviergimenez/bayes-multistate-jollyseber with constant survival, time-dependent capture, time-dependent entry. We use vague priors for survival, capture, inclusion probability, and entry, as in Kéry and Schaub (2011).
+
+Further, we have included the population growth rate ($\lambda$) computed as a derived quantity from the estimated population sizes or survival and per-capita entry probability:
+
+$$\lambda_t = \frac{N_{t+1}}{N_t} = \phi_t + f_t$$
+
+POPAN parameterization of data:
+```{r}
+popan <- function() {
+ 
+   # Priors and constraints
+  for (i in 1:M){
+    for (t in 1:(n.occasions-1)){
+      phi[i,t] <- mean.phi  # Constant survival 
+    } #t
+    for (t in 1:n.occasions){
+      p[i,t] <- p.time[t]  # Time-dependent capture
+    } #t
+  } #i
+  
+  mean.phi ~ dunif(0, 1)  # Prior for mean survival - uniform distribution with min = 0 and max = 1
+  #mean.phi ~ dnorm(0.8, 0.3)  # Prior for mean survival - normal distribution with mean = 0.8, sd = 0.3
+  psi ~ dunif(0, 1) # Prior for inclusion probability
+  
+  for(t in 1:n.occasions) {
+    p.time[t] ~ dunif(0,1)  # prior for time-dependent capture
+  }
+  
+  # Dirichlet prior for entry probabilities
+  for (t in 1:n.occasions){
+    beta[t] ~ dgamma(1, 1)  # gamma distribution with shape = 1 and scale = 1
+    b[t] <- beta[t] / sum(beta[1:n.occasions])
+  }
+  
+  # Convert entry probs to conditional entry probs
+  nu[1] <- b[1]
+  for (t in 2:n.occasions){
+    nu[t] <- b[t] / (1 - sum(b[1:(t-1)]))
+  } #t
+  
+  # Likelihood
+  for (i in 1:M){
+    # First occasion
+    # State process
+    w[i] ~ dbern(psi)  # Draw latent inclusion
+    z[i,1] ~ dbern(nu[1])
+    # Observation process
+    mu1[i] <- z[i,1] * p[i,1] * w[i]
+    y[i,1] ~ dbern(mu1[i])
+    # Subsequent occasions
+    for (t in 2:n.occasions){
+      # State process
+      q[i,t-1] <- 1 - z[i,t-1]
+      mu2[i,t] <- phi[i,t-1] * z[i,t-1] + nu[t] * prod(q[i,1:(t-1)])
+      z[i,t] ~ dbern(mu2[i,t])
+      # Observation process
+      mu3[i,t] <- z[i,t] * p[i,t] * w[i]
+      y[i,t] ~ dbern(mu3[i,t])
+    } #t
+  } #i
+  
+  # Calculate derived population parameters
+  for (i in 1:M){
+    for (t in 1:n.occasions){
+      u[i,t] <- z[i,t] * w[i]  # Deflated latent state (u)
+    }
+  }
+  for (i in 1:M){
+    recruit[i,1] <- u[i,1]
+    for (t in 2:n.occasions){
+      recruit[i,t] <- (1 - u[i,t-1]) * u[i,t]
+    } #t
+  } #i
+  for (t in 1:n.occasions){
+    N[t] <- sum(u[1:M,t])  # Actual population size
+    B[t] <- sum(recruit[1:M,t])  # Number of entries
+  } #t
+  for (i in 1:M){
+    Nind[i] <- sum(u[i,1:n.occasions])
+    Nalive[i] <- 1 - equals(Nind[i], 0)
+  } #i
+  for (t in 1:(n.occasions-2)) {
+    lambda[t] <- N[t+1]/N[t] # Lambda realized population growth rate
+    f[t] <- B[t+1]/N[t] # recruitment (per capita entry) rate
+  } #t
+  Nsuper <- sum(Nalive[]) # Superpopulation size
+  mean.lambda <- mean(lambda[]) # mean realized growth rate
+}
+```
+
+*Some remaining questions about this model:*
+- Should we use more informative priors? A beta distribution rather than a uniform distribution?
+- Is the pradel lambda calculated correctly? Especially the growth rate over the sampling period (like how rmark produces)
+
+Now let's apply it to our data. 
+
+Ungroup the data:
+```{r}
+ch_CMR <- import.chdata("_photo_CMR_data.txt")
+popan_ch <- splitCH(ch_CMR$ch)
+```
+
+Augment the observed capture histories by nz pseudo-individuals, all with capture histories of 0: 
+```{r}
+nz <- 300     # Augmenting the data by 300 pseudo-individuals
+CH.aug <- rbind(popan_ch, matrix(0, ncol = dim(popan_ch)[2], nrow = nz))
+```
+
+Bundle data.
+```{r}
+bugs.data <- list(y = CH.aug, 
+                  n.occasions = dim(CH.aug)[2], 
+                  M = dim(CH.aug)[1])
+
+# Would sometimes get an error for "Invalid parent values" - this is  fix for that. 
+bugs.data$y[1] <- 1
+# This worked once and hasn't since...
+```
+
+We use the same initial values as presented by Schaub & Kéry (2011).
+
+Initial values.
+```{r}
+zinit <- CH.aug
+zinit[zinit==0] <- 1
+
+n.occasions.js <- ncol(CH.aug)
+
+inits <- function(){list(mean.phi = runif(1, 0, 1), 
+                         p.time = runif(n.occasions.js, 0, 1), 
+                         psi = runif(1, 0, 1), 
+                         z = zinit)}
+```
+
+Parameters monitored.
+```{r}
+parameters <- c("psi", "p.time", "mean.phi", "b", "Nsuper", "N", "B", "nu", "lambda", "f", "mean.lambda")
+```
+
+MCMC settings.
+```{r}
+n.iter   <- 40000     # Number of iterations
+n.burnin <- 10000      # Number discarded (burn-in)
+n.chains <- 3         # Number of chains
+```
+
+Call Jags.
+```{r}
+kw_popan <- jags(data = bugs.data,
+                     inits = inits,
+                     parameters.to.save = parameters,
+                     model.file = popan,
+                     n.chains = n.chains,
+                     n.iter = n.iter,
+                     n.burnin = n.burnin)
+kw_popan
+```
+
+Rhat is the potential scale reduction factor, a convergence diagnostic (Gelman-Rubin diagnostic: at convergence, Rhat=1). The rule of thumb is that all Rhat values should be <1.1.
+
+A handful of Rhat values remain above 1.1. Longer burn-in or more iterations?
+
+
+```{r}
+library(mcmcplots)
+kw_popan.mcmc <- as.mcmc(kw_popan)
+
+plot(kw_popan)
+
+# Traceplot
+mcmcplots::traplot(kw_popan.mcmc, parms = c("Nsuper", "deviance", "mean.p", "mean.phi", "lambda"), style = "plain") 
+
+# Density plot
+mcmcplots::denplot(kw_popan.mcmc, parms = c("Nsuper", "deviance", "mean.p", "mean.phi", "lambda"), style = "plain")
+
+# Autocorrelation plot
+mcmcplots::autplot1(kw_popan.mcmc, chain = 1, style = "plain")
+# Should we thin the samples?
+```
+
+
+A bit lost with what other model evaluation steps need to be completed for this type of analysis... tried to do a posterior predictive check but coda.samples not working since I called "jags" for the model instead of "jags.model". Will have to figure out another way.
+```{r, fig.height = 9, fig.width = 15}
+library(coda)
+
+gelman.plot(kw_popan.mcmc)
+```
+
+
+
+
+
+
+
+
+
