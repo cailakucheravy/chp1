@@ -4,6 +4,8 @@ date: "`r Sys.Date()`"
 output: pdf_document
 ---
 
+*** NOTE: this used to work but now I keep getting the error "Error in jags.model... Invalid parent values" when I try to run it and I can't figure out why because I don't think I changed anything 
+
 Here, we will re-analyze the photo-ID CMR data using a Bayesian hierarchichal state-space framework, as described in Kéry and Schaub (2011). See script 02.1_PhotoID_CMR for discussion of POPAN JS CMR assumptions.
 
 The script was obtained from https://github.com/oliviergimenez/bayes-multistate-jollyseber, modified for these data.
