@@ -14,7 +14,7 @@ Prep:
 setwd("~/Documents/Master's/Analysis/Epigenetic Aging/Killer Whales")
 
 library(tidyverse)
-library(glmnet)
+#library(glmnet)
 ```
 
 Load updated sample sheet:
@@ -33,7 +33,7 @@ kw_clock <- clock %>%
 
 Load normalized beta values: 
 ```{r}
-kw_betas <- readRDS('output/tbetas_corrected_combined_KillerWhale_array.rds')
+kw_betas <- readRDS('output/tbetas_corrected_combined_KillerWhale_array_August2024_redo3.rds')
 
 # Filter for CpGs used in clock - 50 for killer whales
 kw_betas_filtered <- kw_betas %>% 
@@ -79,162 +79,292 @@ DNAm_ages_kw <- est_ages_kw %>%
 # Join ages with sample sheet
 kw_ages <- sample_sheet %>%             
   left_join(DNAm_ages_kw, by = "chip.ID.loc")
+
+# Save csv file of all ages
+# write.csv(kw_ages, "kw_ages_August2024")
+```
+
+Remove the "bad" samples from the epigenetic array: 
+```{r}
+bad <- c("KW-2021-PG-03", 
+         "KW-2021-PG-04", 
+         "KW-2021-PG-05", 
+         "KW-2021-PG-06",
+         "KW-2021-PG-08", 
+         "KW-2021-PG-09", 
+         "KW-2021-PG-11", 
+         "KW-2021-PG-XX", 
+         "KW-2019-01",
+         "KW-2019-02",
+         "GRNL-KW-2021-01",
+         "GRNL-KW-2021-03",
+         "OR21-1",
+         "OR21-2",
+         "KW-Nfld-22-25",
+         "KW-2022-PI-01"
+         )
+
+kw_ages <- kw_ages  %>% 
+  filter(!sampleId %in% bad)
 ```
 
 Take a look at the duplicates:
 ```{r}
 # Note that KW-2019-06 was a technical replicate (from the same DNA sample), while the others were from different skin samples of the same whale. 
 duplicates <- kw_ages %>% 
+  select(block, sampleId, Year, Location, Sex, Age_Transformed) %>% 
   arrange(block) %>% 
   group_by(block) %>%
   filter(n() > 1)
 duplicates
+
+#write.csv(duplicates, "duplicate_epigenetic_ages_August2024.csv")
 ```
 
 Most of the ages estimate for duplicate samples are quite close, but some of the recaptures don't reflect the difference in age between captures.
 
-We also have a few known-age individuals. Unfortunately, two of the known-age individuals (ARSQ-xx-1379, 34yo and KW-CH-2011, 35 yo) had to be removed in the quality control stage.
+Try plotting the differences in estimated ages across time.
+```{r}
+cols <- c("tomato3", "steelblue3")
+
+# Plot difference in estimated ages across time
+ggplot(duplicates, aes(x = Year, 
+                       y = Age_Transformed, 
+                       group = block,
+                       #label = sampleId,
+                       color = Sex)) + 
+  geom_point() + 
+  geom_line() + 
+  #geom_text(hjust = -0.1, vjust = -0.1, cex = 2) +
+  scale_x_continuous(limits = c(2013, 2020), breaks = seq(2013, 2020, by = 1)) +
+  scale_y_continuous(breaks = seq(0, 30, by = 2)) +
+  scale_color_manual(values = cols,
+                     labels = c("Female", "Male")) +
+  labs(x = "Year of Capture", y = "DNAm Age") +
+  theme_bw() + 
+  theme(axis.text = element_text(size=14),
+        axis.title = element_text(size=18),
+        legend.title = element_blank(),
+        legend.text = element_text(size = 18),
+        legend.position = c(0.15,0.79),
+        legend.background = element_blank())
+
+#ggsave("Plots/age_difference_by_year.png", width = 8, height = 6, dpi = 300)
+```
+
+We also have a few known-age individuals. Unfortunately, two of the known-age individuals (ARSQ-xx-1379, 34yo and KW-CH-2011, 35 yo) had to be removed in the quality control stage, and the 2022 sample was mixed in the great sample disaster.
 
 We can compare the DNAm estimated age to the known age (determined from GLGs):
 ```{r}
 known_ages <- data.frame(
-  sampleId = c("ARRB-xx-1291", "ARSQ-xx-1397", "KW-2022-PI-01"),
-  Known_Age = c(28, 6, "In progress")
-)
+  sampleId = c("ARRB-xx-1291", "ARSQ-xx-1397"),
+  Known_Age = c(28, 6))
 
 est_ages <- kw_ages %>% 
   select(sampleId, Age_Transformed) %>% 
-  filter(sampleId %in% c("ARRB-xx-1291", "ARSQ-xx-1397", "KW-2022-PI-01"))
+  filter(sampleId %in% c("ARRB-xx-1291", "ARSQ-xx-1397"))
 
 compare_known_ages <- known_ages %>% 
-  left_join(est_ages, by = "sampleId") 
+  left_join(est_ages, by = "sampleId") %>% 
+  mutate(Difference = Age_Transformed - Known_Age)
 compare_known_ages
 ```
 
-Remove the duplicates and add the difference between year and 2022:
+Take the first of duplicate samples, then remove duplicates and individuals not in the "High Arctic" population.
 ```{r}
-# Taking the first age for now - but might want to take average or something for final ages.
-kw_ages_dupsRemoved <- kw_ages %>% 
+# Remove duplicates - take the first sample
+kw_ages_dupsRemoved <- kw_ages %>%
+  arrange(block) %>% 
   mutate(duplicate = duplicated(block)) %>% 
   filter(!duplicate == "TRUE")
 
-# Add the difference in years so that the age structure represents what it would be in 2022:
-kw_ages_dupsRemoved <- kw_ages_dupsRemoved %>% 
-  select(!duplicate) %>% 
-  mutate(diffYear = 2022 - kw_ages_dupsRemoved$Year) %>% 
-  mutate(adj_age = Age_Transformed + diffYear)
-
-#Write the age file to csv: 
-#write.csv(kw_ages_dupsRemoved, "kw_ages.csv")
-
-# Keep only Cumberland Sound & Northern Baffin Island samples ("High Arctic" group):
-Locations <- c("Cumberland Sound", "Eclipse Sound", "Newfoundland", "Saint Pierre et Miquelon")
-
-kw_ages_HA <- kw_ages_dupsRemoved %>% 
-  filter(Location %in% Locations) %>% 
+# Keep only Northern Baffin Island locations since this is where the mark recapture is run
+kw_ages_HA <- kw_ages_dupsRemoved  %>% 
+  filter(Location %in% c("Cumberland Sound", "Eclipse Sound")) %>% 
   # And the one 2013 CS sample that grouped with the Greenland samples
   filter(!sampleId == "ARPG-2013-01")
 ```
 
-Plot the data (unadjusted age):
+Plot the data (unadjusted - age at year of capture):
 ```{r}
-cols <- c("tomato3", "steelblue3")
+# Set plot colors 
+#cols <- c("tomato3", "steelblue3")
+cols <- c("#dc8374", "#83b4dc")
 
-ggplot(kw_ages_dupsRemoved, aes(x = Age_Transformed, fill = Sex)) + 
-  geom_histogram() +
-  xlab("DNAm Age") +
-  #scale_x_continuous("DNAm Age", limits = c(0,55), breaks = c(0,5,10,15,20,25,30,35,40,45,50,55)) + 
+# Calculate means for males & females 
+males <- kw_ages_HA %>% 
+  filter(Sex == "M")
+mean_males <- mean(males$Age_Transformed)
+median_males <- median(males$Age_Transformed)
+
+females <- kw_ages_HA %>% 
+  filter(Sex == "F")
+mean_females <- mean(females$Age_Transformed)
+median_females <- median(females$Age_Transformed)
+
+#tiff("Plots/Age_Distribution_August2024_2.tiff", units="in", width=8, height=5, res=400)
+
+# Plot
+ggplot(kw_ages_HA, aes(x = Age_Transformed, fill = Sex)) + 
+  geom_histogram(position = "dodge") +
+  scale_x_continuous("DNAm Age", limits = c(0,35), breaks = seq(0, 35, by = 2)) + 
+  scale_y_continuous(limits = c(0,6), breaks = seq(0, 6, by = 2)) + 
   scale_fill_manual(values = cols, 
-                      labels = c("Female", "Male")) + 
-  theme_bw() + 
+                    labels = c("Female", "Male")) + 
+  geom_vline(xintercept = mean_males, col = "#37678f", lty = 1, size = 1) + 
+  geom_vline(xintercept = mean_females, col = "#8f3727", lty = 1, size = 1) + 
+  theme_classic() + 
   theme(axis.text = element_text(size=14),
         axis.title = element_text(size=18),
         legend.title = element_blank(),
-        legend.text = element_text(size = 14),
+        legend.text = element_text(size = 18),
         legend.position = c(0.82,0.8),
         legend.background = element_blank())
-```
-
-```{r}
-males <- kw_ages_dupsRemoved %>% 
-  filter(Sex == "M")
-females <- kw_ages_dupsRemoved %>% 
-  filter(Sex == "F")
-
-g <- ggplot() + 
-  geom_histogram( data = females,
-    aes(x = Age_Transformed, y = after_stat(count)),
-    fill="tomato3") + 
-  geom_histogram( data = males,
-    aes(x = Age_Transformed, y = -after_stat(count)), 
-    fill= "steelblue") + 
-  theme_bw()
-
-#tiff("Age_Distribution_2.tiff", units="in", width=8, height=5, res=400)
-
-g + 
-  coord_flip() + 
-  xlab("DNAm Age") +
-  #scale_x_continuous(limits = c(0,55), breaks = c(0,10,20,30,40,50)) + 
-  #scale_y_continuous("DNAm Age", limits = c(-5,5), breaks = c(-5,-3,-1,1,3,5))
-  theme(axis.text = element_text(size=14),
-        axis.title = element_text(size=16))
-
+  
 #dev.off()
 ```
 
-Plot the data (adjusted 2022 age):
+To get what the age structure would be in a given year, adjust ages to year 2020:
 ```{r}
-#tiff("age_structure_no.calves.tiff", units="in", width=6, height=4, res=500)
+kw_ages_HA <- kw_ages_HA %>% 
+  mutate(diff_Year = (2022 - Year)) %>% 
+  mutate(adj_age = (Age_Transformed + diff_Year))
 
+#write.csv(kw_ages_HA, "kw_ages_HA_August2024.csv")
+```
+
+Plot the adjusted data (age corrected to 2020):
+```{r}
+# Calculate means for males & females 
+mean_adj_males <- mean(males$adj_age)
+median_adj_males <- median(males$adj_age)
+
+mean_adj_females <- mean(females$adj_age)
+median_adj_females <- median(females$adj_age)
+
+#tiff("Plots/Adj_Age_Distribution_August2024_2.tiff", units="in", width=8, height=5, res=400)
+
+# Plot
 ggplot(kw_ages_HA, aes(x = adj_age, fill = Sex)) + 
-  geom_histogram() +
+  geom_histogram(position = "dodge") +
   xlab("DNAm Age") +
-  #scale_x_continuous("DNAm Age", limits = c(0,55), breaks = c(0,5,10,15,20,25,30,35,40,45,50,55)) + 
+  scale_x_continuous("Adjusted DNAm Age", limits = c(0,35), breaks = seq(0, 35, by = 2)) + 
+  scale_y_continuous(limits = c(0,6), breaks = seq(0, 6, by = 2)) + 
   scale_fill_manual(values = cols, 
                       labels = c("Female", "Male")) + 
-  theme_bw() + 
+  geom_vline(xintercept = mean_adj_males, col = "#37678f", lty = 1, size = 1) + 
+  #geom_vline(xintercept = median_males, col = "steelblue3", lty = 2) + 
+  geom_vline(xintercept = mean_adj_females, col = "#8f3727", lty = 1, size = 1) + 
+  #geom_vline(xintercept = median_females, col = "tomato3", lty = 2) + 
+  theme_classic() + 
   theme(axis.text = element_text(size=14),
         axis.title = element_text(size=18),
         legend.title = element_blank(),
-        legend.text = element_text(size = 14),
-        legend.position = c(0.82,0.8),
-        legend.background = element_blank())
+        legend.position = "none")
 
 #dev.off()
 ```
 
 Summarize data: 
 ```{r}
-males <- kw_ages_dupsRemoved %>% 
+# Number of samples
+length(kw_ages_HA$sampleId)
+
+# Summary of unadjusted age 
+summary(kw_ages_HA$Age_Transformed)
+
+# Summary of adjusted age 
+summary(kw_ages_HA$adj_age)
+
+# Summary for males: 
+males <- kw_ages_HA %>% 
   filter(Sex == "M")
 
-females <- kw_ages_dupsRemoved %>% 
-  filter(Sex == "F")
-
-length(males$Age_Transformed)
+length(males$sampleId)
 summary(males$Age_Transformed)
 summary(males$adj_age)
 
-length(females$Age_Transformed)
+# Proportion of males
+length(males$adj_age)/length(kw_ages_HA$adj_age)
+
+# Summary for females
+females <- kw_ages_HA %>% 
+  filter(Sex == "F")
+
+length(females$sampleId)
 summary(females$Age_Transformed)
 summary(females$adj_age)
 
+# Proportion of females
+length(females$adj_age)/length(kw_ages_HA$adj_age)
+
 # Juveniles
-kw_ages_dupsRemoved %>% 
-  dplyr::count(adj_age < 10)
-24/76
+kw_ages_HA %>% 
+  dplyr::count(adj_age < 13)
+26/51
 
 # Reproductive adults
-kw_ages_dupsRemoved %>% 
+kw_ages_HA %>% 
   dplyr::count(adj_age < 35)
-(75-24)/76
+25/51
 
 # Post-reproductive adults
-kw_ages_dupsRemoved %>% 
+kw_ages_HA %>% 
   dplyr::count(adj_age > 35)
-1/76
+
 ```
 
 
 
+
+
+
+```{r}
+g <- ggplot() + 
+  geom_histogram( data = females,
+    aes(x = Age_Transformed, y = after_stat(count)),
+    fill="#dc8374") + 
+  geom_histogram( data = males,
+    aes(x = Age_Transformed, y = -after_stat(count)), 
+    fill= "#83b4dc") + 
+  theme_bw()
+
+#tiff("Age_Distribution_2.tiff", units="in", width=8, height=5, res=400)
+
+age_plot <- g + 
+  coord_flip() + 
+  scale_x_continuous("DNAm Age", limits = c(0,35), breaks = seq(0, 35, by = 5)) +
+  scale_y_continuous("Count", limits = c(-5,5), breaks = seq(-5,5, by = 1)) +
+  geom_segment(aes(x = mean_males, xend = mean_males, y = 0, yend = -5), col = "#37678f", lty = 1, size = 1.3) + 
+  geom_segment(aes(x = mean_females, xend = mean_females, y = 0, yend = 5), col = "#8f3727", lty = 1, size = 1.3) +
+  #annotate(geom = "text", label = "Male", x = 0.5, y = -5, color = "#37678f", cex = 7, hjust = 0) + 
+  theme(axis.text = element_text(size=14),
+        axis.title = element_text(size=16)) 
+
+#dev.off()
+```
+
+```{r}
+g2 <- ggplot() + 
+  geom_histogram( data = females,
+    aes(x = adj_age, y = after_stat(count)),
+    fill="#dc8374") + 
+  geom_histogram( data = males,
+    aes(x = adj_age, y = -after_stat(count)), 
+    fill= "#83b4dc") + 
+  theme_bw()
+
+#tiff("Age_Distribution_2.tiff", units="in", width=8, height=5, res=400)
+
+g2 + 
+  coord_flip() + 
+  scale_x_continuous("DNAm Age", limits = c(0,35), breaks = seq(0, 35, by = 5)) +
+  scale_y_continuous("Count", limits = c(-6,6), breaks = seq(-6,6, by = 1)) +
+  geom_segment(aes(x = mean_adj_males, xend = mean_adj_males, y = 0, yend = -6), col = "#37678f", lty = 1, size = 1.3) + 
+  geom_segment(aes(x = mean_adj_females, xend = mean_adj_females, y = 0, yend = 6), col = "#8f3727", lty = 1, size = 1.3) +
+  #annotate(geom = "text", label = "Male", x = 0.5, y = -5, color = "#37678f", cex = 7, hjust = 0) + 
+  theme(axis.text = element_text(size=14),
+        axis.title = element_text(size=16)) 
+
+#dev.off()
+```
