@@ -1,0 +1,49 @@
+﻿OriginalOrderInBatch,ExternalSampleID,Block,Basename,Age,ConfidenceInAgeEstimate,CanBeUsedForAgingStudies,SpeciesLatinName,SpeciesCommonName,Tissue,Female,Folder,PlateNumber,WellAddress,Sex,Year,Location
+8,ARRB-xx-1291,ARRB-xx-1291,206139140044_R02C02,NA,0,yes,Orcinus orca,Killer whale,Skin,NA,N134.2021-9186.ET0067KillerWhaleTeraEdkins,Plate 01,H01,F,2009,Naujaat
+7,KW-CH-2011,KW-CH-2011,206139140044_R01C02,NA,0,yes,Orcinus orca,Killer whale,Skin,NA,N134.2021-9186.ET0067KillerWhaleTeraEdkins,Plate 01,G01,U,2011,Coral Harbour
+48,KW-CH-2011,KW-CH-2011,206139140036_R06C02,NA,0,yes,Orcinus orca,Killer whale,Skin,NA,N134.2021-9186.ET0067KillerWhaleTeraEdkins,Plate 01,H06,U,2011,Coral Harbour
+10,ARSQ-xx-1379,ARSQ-xx-1379,206139140044_R04C02,NA,0,yes,Orcinus orca,Killer whale,Skin,1,N134.2021-9186.ET0067KillerWhaleTeraEdkins,Plate 01,B02,U,2016,Sanikiluaq
+9,ARSQ-xx-1397,ARSQ-xx-1397,206139140044_R03C02,NA,0,yes,Orcinus orca,Killer whale,Skin,NA,N134.2021-9186.ET0067KillerWhaleTeraEdkins,Plate 01,A02,F,2016,Sanikiluaq
+47,ARSQ-xx-1397,ARSQ-xx-1397,206139140036_R05C02,NA,0,yes,Orcinus orca,Killer whale,Skin,NA,N134.2021-9186.ET0067KillerWhaleTeraEdkins,Plate 01,G06,F,2016,Sanikiluaq
+19,KW-2020-PG-01,KW-2020-PG-01,206116820074_R01C02,NA,0,yes,Orcinus orca,Killer whale,Skin,NA,N134.2021-9186.ET0067KillerWhaleTeraEdkins,Plate 01,C03,M,2020,Cumberland Sound
+20,KW-2020-PG-02,KW-2020-PG-02,206116820074_R02C02,NA,0,yes,Orcinus orca,Killer whale,Skin,NA,N134.2021-9186.ET0067KillerWhaleTeraEdkins,Plate 01,D03,F,2020,Cumberland Sound
+21,KW-2020-PG-03,KW-2020-PG-03,206116820074_R03C02,NA,0,yes,Orcinus orca,Killer whale,Skin,NA,N134.2021-9186.ET0067KillerWhaleTeraEdkins,Plate 01,E03,F,2020,Cumberland Sound
+40,KW-2020-PG-03,KW-2020-PG-03,206139140036_R04C01,NA,0,yes,Orcinus orca,Killer whale,Skin,NA,N134.2021-9186.ET0067KillerWhaleTeraEdkins,Plate 01,H05,F,2020,Cumberland Sound
+22,KW-2020-PG-04,KW-2020-PG-04,206116820074_R04C02,NA,0,yes,Orcinus orca,Killer whale,Skin,NA,N134.2021-9186.ET0067KillerWhaleTeraEdkins,Plate 01,F03,M,2020,Cumberland Sound
+23,KW-2020-PG-05,KW-2020-PG-05,206116820074_R05C02,NA,0,yes,Orcinus orca,Killer whale,Skin,NA,N134.2021-9186.ET0067KillerWhaleTeraEdkins,Plate 01,G03,M,2020,Cumberland Sound
+24,KW-2020-PG-06,ARPI-2013-06,206116820074_R06C02,NA,0,yes,Orcinus orca,Killer whale,Skin,NA,N134.2021-9186.ET0067KillerWhaleTeraEdkins,Plate 01,H03,F,2020,Cumberland Sound
+25,KW-2020-PG-07,KW-2020-PG-03,206139140066_R01C01,NA,0,yes,Orcinus orca,Killer whale,Skin,NA,N134.2021-9186.ET0067KillerWhaleTeraEdkins,Plate 01,A04,F,2020,Cumberland Sound
+26,KW-2020-PG-08,KW-2020-PG-08,206139140066_R02C01,NA,0,yes,Orcinus orca,Killer whale,Skin,NA,N134.2021-9186.ET0067KillerWhaleTeraEdkins,Plate 01,B04,F,2020,Cumberland Sound
+1,KW-2020-PG-09,KW-2020-PG-09,206139140044_R01C01,NA,0,yes,Orcinus orca,Killer whale,Skin,NA,N134.2021-9186.ET0067KillerWhaleTeraEdkins,Plate 01,A01,F,2020,Cumberland Sound
+27,KW-2020-PG-10,KW-2020-PG-10,206139140066_R03C01,NA,0,yes,Orcinus orca,Killer whale,Skin,NA,N134.2021-9186.ET0067KillerWhaleTeraEdkins,Plate 01,C04,M,2020,Cumberland Sound
+41,KW-2020-PG-10,KW-2020-PG-10,206139140036_R05C01,NA,0,yes,Orcinus orca,Killer whale,Skin,NA,N134.2021-9186.ET0067KillerWhaleTeraEdkins,Plate 01,A06,M,2020,Cumberland Sound
+28,KW-2020-PG-11,KW-2020-PG-11,206139140066_R04C01,NA,0,yes,Orcinus orca,Killer whale,Skin,NA,N134.2021-9186.ET0067KillerWhaleTeraEdkins,Plate 01,D04,F,2020,Cumberland Sound
+42,KW-2020-PG-11,KW-2020-PG-11,206139140036_R06C01,NA,0,yes,Orcinus orca,Killer whale,Skin,NA,N134.2021-9186.ET0067KillerWhaleTeraEdkins,Plate 01,B06,F,2020,Cumberland Sound
+29,KW-2020-PG-12,KW-2020-PG-01,206139140066_R05C01,NA,0,yes,Orcinus orca,Killer whale,Skin,NA,N134.2021-9186.ET0067KillerWhaleTeraEdkins,Plate 01,E04,M,2020,Cumberland Sound
+30,KW-2020-PG-13,KW-2020-PG-13,206139140066_R06C01,NA,0,yes,Orcinus orca,Killer whale,Skin,NA,N134.2021-9186.ET0067KillerWhaleTeraEdkins,Plate 01,F04,M,2020,Cumberland Sound
+43,KW-2020-PG-13,KW-2020-PG-13,206139140036_R01C02,NA,0,yes,Orcinus orca,Killer whale,Skin,NA,N134.2021-9186.ET0067KillerWhaleTeraEdkins,Plate 01,C06,M,2020,Cumberland Sound
+31,KW-2020-PG-14,KW-2020-PG-14,206139140066_R01C02,NA,0,yes,Orcinus orca,Killer whale,Skin,NA,N134.2021-9186.ET0067KillerWhaleTeraEdkins,Plate 01,G04,M,2020,Cumberland Sound
+44,KW-2020-PG-14,KW-2020-PG-14,206139140036_R02C02,NA,0,yes,Orcinus orca,Killer whale,Skin,NA,N134.2021-9186.ET0067KillerWhaleTeraEdkins,Plate 01,D06,M,2020,Cumberland Sound
+32,KW-2020-PG-15,KW-2020-PG-15,206139140066_R02C02,NA,0,yes,Orcinus orca,Killer whale,Skin,NA,N134.2021-9186.ET0067KillerWhaleTeraEdkins,Plate 01,H04,F,2020,Cumberland Sound
+33,KW-2020-PG-16,KW-2020-PG-16,206139140066_R03C02,NA,0,yes,Orcinus orca,Killer whale,Skin,NA,N134.2021-9186.ET0067KillerWhaleTeraEdkins,Plate 01,A05,F,2020,Cumberland Sound
+34,KW-2020-PG-17,KW-2020-PG-17,206139140066_R04C02,NA,0,yes,Orcinus orca,Killer whale,Skin,NA,N134.2021-9186.ET0067KillerWhaleTeraEdkins,Plate 01,B05,M,2020,Cumberland Sound
+45,KW-2020-PG-17,KW-2020-PG-17,206139140036_R03C02,NA,0,yes,Orcinus orca,Killer whale,Skin,NA,N134.2021-9186.ET0067KillerWhaleTeraEdkins,Plate 01,E06,M,2020,Cumberland Sound
+35,KW-2020-PG-18,ARPI-2013-06,206139140066_R05C02,NA,0,yes,Orcinus orca,Killer whale,Skin,NA,N134.2021-9186.ET0067KillerWhaleTeraEdkins,Plate 01,C05,F,2020,Cumberland Sound
+2,KW-2020-PG-19,KW-2020-PG-09,206139140044_R02C01,NA,0,yes,Orcinus orca,Killer whale,Skin,NA,N134.2021-9186.ET0067KillerWhaleTeraEdkins,Plate 01,B01,F,2020,Cumberland Sound
+36,KW-2020-PG-20,KW-2020-PG-04,206139140066_R06C02,NA,0,yes,Orcinus orca,Killer whale,Skin,NA,N134.2021-9186.ET0067KillerWhaleTeraEdkins,Plate 01,D05,M,2020,Cumberland Sound
+37,KW-2020-PG-21,ARPI-2013-01,206139140036_R01C01,NA,0,yes,Orcinus orca,Killer whale,Skin,NA,N134.2021-9186.ET0067KillerWhaleTeraEdkins,Plate 01,E05,F,2020,Cumberland Sound
+38,KW-2020-PG-22,KW-2020-PG-22,206139140036_R02C01,NA,0,yes,Orcinus orca,Killer whale,Skin,NA,N134.2021-9186.ET0067KillerWhaleTeraEdkins,Plate 01,F05,F,2020,Cumberland Sound
+39,KW-2020-PG-23,KW-2020-PG-17,206139140036_R03C01,NA,0,yes,Orcinus orca,Killer whale,Skin,NA,N134.2021-9186.ET0067KillerWhaleTeraEdkins,Plate 01,G05,M,2020,Cumberland Sound
+3,KW-2020-PG-24,KW-2020-PG-24,206139140044_R03C01,NA,0,yes,Orcinus orca,Killer whale,Skin,NA,N134.2021-9186.ET0067KillerWhaleTeraEdkins,Plate 01,C01,M,2020,Cumberland Sound
+4,KW-2020-PI-02,KW-2020-PI-02,206139140044_R04C01,NA,0,yes,Orcinus orca,Killer whale,Skin,NA,N134.2021-9186.ET0067KillerWhaleTeraEdkins,Plate 01,D01,F,2020,Eclipse Sound
+11,KW-2020-PI-03,KW-2020-PI-03,206139140044_R05C02,NA,0,yes,Orcinus orca,Killer whale,Skin,NA,N134.2021-9186.ET0067KillerWhaleTeraEdkins,Plate 01,C02,M,2020,Eclipse Sound
+12,KW-2020-PI-05,KW-2020-PI-05,206139140044_R06C02,NA,0,yes,Orcinus orca,Killer whale,Skin,NA,N134.2021-9186.ET0067KillerWhaleTeraEdkins,Plate 01,D02,F,2020,Eclipse Sound
+5,KW-2020-PI-06,KW-2020-PI-05,206139140044_R05C01,NA,0,yes,Orcinus orca,Killer whale,Skin,NA,N134.2021-9186.ET0067KillerWhaleTeraEdkins,Plate 01,E01,F,2020,Eclipse Sound
+13,KW-2020-PI-07,KW-2020-PI-07,206116820074_R01C01,NA,0,yes,Orcinus orca,Killer whale,Skin,NA,N134.2021-9186.ET0067KillerWhaleTeraEdkins,Plate 01,E02,F,2020,Eclipse Sound
+14,KW-2020-PI-08,KW-2020-PI-08,206116820074_R02C01,NA,0,yes,Orcinus orca,Killer whale,Skin,NA,N134.2021-9186.ET0067KillerWhaleTeraEdkins,Plate 01,F02,F,2020,Eclipse Sound
+15,KW-2020-PI-10,KW-2020-PI-10,206116820074_R03C01,NA,0,yes,Orcinus orca,Killer whale,Skin,NA,N134.2021-9186.ET0067KillerWhaleTeraEdkins,Plate 01,G02,M,2020,Eclipse Sound
+16,KW-2020-PI-12,KW-2020-PI-12,206116820074_R04C01,NA,0,yes,Orcinus orca,Killer whale,Skin,NA,N134.2021-9186.ET0067KillerWhaleTeraEdkins,Plate 01,H02,F,2020,Eclipse Sound
+46,KW-2020-PI-12,KW-2020-PI-12,206139140036_R04C02,NA,0,yes,Orcinus orca,Killer whale,Skin,NA,N134.2021-9186.ET0067KillerWhaleTeraEdkins,Plate 01,F06,F,2020,Eclipse Sound
+17,KW-2020-PI-13,KW-2020-PI-13,206116820074_R05C01,NA,0,yes,Orcinus orca,Killer whale,Skin,NA,N134.2021-9186.ET0067KillerWhaleTeraEdkins,Plate 01,A03,M,2020,Eclipse Sound
+18,KW-2020-PI-14,KW-2020-PI-14,206116820074_R06C01,NA,0,yes,Orcinus orca,Killer whale,Skin,NA,N134.2021-9186.ET0067KillerWhaleTeraEdkins,Plate 01,B03,M,2020,Eclipse Sound
+6,KW-2020-PI-15,KW-2020-PI-15,206139140044_R06C01,NA,0,yes,Orcinus orca,Killer whale,Skin,NA,N134.2021-9186.ET0067KillerWhaleTeraEdkins,Plate 01,F01,F,2020,Eclipse Sound
