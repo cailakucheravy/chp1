@@ -3,21 +3,41 @@ title: "01.2_PhotoID_CMR_Bayes"
 date: "`r Sys.Date()`"
 ---
 
-Here, we will re-analyze the photo-ID CMR data using a Bayesian framework, as described in Marc and Kéry (2011).
+Capture mark recapture of Arctic killer whales using a genetic (whole genome) identification history. Here, we will analyze the genetic CMR data using a Bayesian framework, as described in Marc and Kéry (2011).
 
-The script was obtained from https://github.com/oliviergimenez/bayes-multistate-jollyseber, modified for these data.
+The script was obtained from https://github.com/oliviergimenez/bayes-multistate-jollyseber, modified for these data (described in 02.2_PhotoID_CMR_Bayes).
+
+### POPAN Jolly Seber 
+
+Assumptions for Jolly-Seber Mark Recapture models: 
+1. Animals retain their tags throughout the experiment 
+2. Tags are read properly
+3. Sampling is instantaneous
+4. Survival probabilities are the same for all animals (marked and unmarked) between each pair of sampling occasions (homogenous survival)
+5. Catchability is the same for all animals (marked and unmarked) at each sampling occasion (homogenous catchability)
+6. The study area is constant
+
+In the case of killer whales, do we meet the assumptions?
+1. Yes - most nicks and scars used for ID are retained through the life of the animal.
+2. Yes - we can assume that identified individuals are re-identified reliably. However, there are ways to account for identification error - to be explored later. 
+3. Yes - sampling period is short (1 to a few days)
+4. Probably? - while survival probabilities might differ between sex and age classes, being "marked" does not affect an individual's survival
+5. Unlikely? - Equal catchability could be affected by: 
+    - Behaviour: some individuals/groups may be more likely to approach the boat, and thus we may get more/better photographs
+    - Individuals with more distinct markings may be more likely to be identified/re-identified when image quality is lower 
+    - Cooch and White (2014) describe this as the most ciritical assumption for JS models
+6. Sort of? - The study area is confined to locations around Northern Baffin Island (mainly Admiralty Inlet and Eclipse Sound) and Cumberland Sound, but we have not consistently sampled in each location each year 
+
+### Analysis 
 
 Prep the environment: 
 ```{r, include = FALSE}
-#rm(list=ls())
-
 setwd("~/Documents/Master's/Analysis/CMR")
 
 library(tidyverse)
 library(rjags)
-library(RMark)
 library(R2jags)
-library(R2ucare)
+library(RMark)
 ```
 
 See 02.2_PhotoID_CMR_Bayes for description of model.
@@ -37,7 +57,6 @@ popan <- function() {
   } #i
   
   mean.phi ~ dunif(0, 1)  # Prior for mean survival - uniform distribution with min = 0 and max = 1
-  #mean.phi ~ dnorm(0.8, 0.3)  # Prior for mean survival - normal distribution with mean = 0.8, sd = 0.3
   psi ~ dunif(0, 1) # Prior for inclusion probability
   
   for(t in 1:n.occasions) {
@@ -97,20 +116,43 @@ popan <- function() {
     Nind[i] <- sum(u[i,1:n.occasions])
     Nalive[i] <- 1 - equals(Nind[i], 0)
   } #i
-  for (t in 1:(n.occasions-2)) {
-    lambda[t] <- N[t+1]/N[t] # Pradel-Lambda realized population growth rate
+  for (t in 1:(n.occasions-1)) {
+    lambda[t] <- N[t+1]/N[t] # Lambda realized annual population growth rate
     f[t] <- B[t+1]/N[t] # recruitment (per capita entry) rate
   } #t
   Nsuper <- sum(Nalive[]) # Superpopulation size
-  mean.lambda <- mean(lambda[]) # mean realized growth rate
+  mean.lambda <- (prod(lambda[]))^(1/(n.occasions-1)) # geometric mean realized growth rate 
 }
 ```
 
 Now let's apply it to our data. 
 
-Ungroup the data:
+Load and format the genetic capture history data:
 ```{r}
-ch_CMR_gen <- import.chdata("_genetic_CMR_data.txt")
+# Load data and insert zeros instead of NAs in years where there are no sightings: 
+CMR_data_gen <- read.csv("genetic_CMR_data_final.csv", header = TRUE) 
+CMR_data_gen[is.na(CMR_data_gen)] <- 0
+
+# Remove the id column and add a new column for CH data:
+CMR_data_gen <- CMR_data_gen %>% 
+  select(-genome_sample_ID) %>% 
+  mutate(cmr = NA) %>% 
+  relocate(cmr, "X2013")
+
+# Fill the cmr column with 1s and 0s for all years observed: 
+for (i in 1:nrow(CMR_data_gen)){
+  CMR_data_gen[i,1] <- paste(CMR_data_gen[i,2], CMR_data_gen[i,3], CMR_data_gen[i,4], CMR_data_gen[i,5],
+                             CMR_data_gen[i,6], CMR_data_gen[i,7], CMR_data_gen[i,8], CMR_data_gen[i,9], 
+                             CMR_data_gen[i,10], CMR_data_gen[i,11],sep = "")}
+
+# Select first column only, rename, and save to txt file
+CMR_gen <- CMR_data_gen %>% 
+  select(cmr) %>% 
+  dplyr::rename(ch = cmr) %>% 
+  write.table(file = "_genetic_cmr_data.txt", row.names = FALSE, quote = FALSE)
+
+# Re-import and split data
+ch_CMR_gen <- import.chdata("_genetic_cmr_data.txt")
 popan_ch_gen <- splitCH(ch_CMR_gen$ch)
 ```
 
@@ -125,9 +167,6 @@ Bundle data.
 bugs.data.gen <- list(y = CH.aug.gen, 
                       n.occasions = dim(CH.aug.gen)[2], 
                       M = dim(CH.aug.gen)[1])
-
-# Would often get an error for "Invalid parent values" - this is  fix for that. 
-bugs.data.gen$y[1] <- 1
 ```
 
 Initial values.
@@ -150,12 +189,12 @@ parameters <- c("psi", "p.time", "mean.phi", "b", "Nsuper", "N", "B", "nu", "lam
 
 MCMC settings.
 ```{r}
-n.iter   <- 10000     # Number of iterations
-n.burnin <- 2000      # Number discarded (burn-in)
+n.iter   <- 50000     # Number of iterations
+n.burnin <- 10000     # Number discarded (burn-in)
 n.chains <- 3         # Number of chains
 ```
 
-Call Jags.
+Call Jags - run model on server.
 ```{r}
 kw_popan_gen <- R2jags::jags(data  = bugs.data.gen,
                      inits = inits,
@@ -167,15 +206,35 @@ kw_popan_gen <- R2jags::jags(data  = bugs.data.gen,
 kw_popan_gen
 ```
 
+Save run: 
 ```{r}
-library(mcmcplots)
-kw_popan.mcmc <- as.mcmc(kw_popan_gen)
+#saveRDS(kw_popan_gen, "output/kw_popan_gen_results_sept2024_run1.rds") 
 
-# Traceplot
-mcmcplots::traplot(kw_popan.mcmc, parms = "Nsuper", "deviance", "mean.p", "mean.phi")
-
-# Density plot
-mcmcplots::denplot(kw_popan.mcmc, parms = "Nsuper", "deviance")
+kw_popan_gen <- readRDS("output/kw_popan_gen_results_sept2024_run1.rds")
+kw_popan_gen
 ```
 
+
+```{r}
+library(mcmcplots)
+library(coda)
+
+# Convert the results to an mcmc list object
+kw_popan_gen.mcmc <- as.mcmc(kw_popan_gen)
+
+# Save mcmc object: 
+#saveRDS(kw_popan_gen.mcmc, "output/kw_popan_gen_mcmc_sept2024_run1.rds") 
+
+cols.gen <- c("#66271c", "#b84733", "#dc8374")
+
+# Traceplot
+#tiff("plots/kw_popan_gen_traceplot.tiff", units="in", width=8, height=5, res=400)
+mcmcplots::traplot(kw_popan_gen.mcmc, parms = c("Nsuper", "mean.lambda", "deviance", "mean.phi"), style = "plain", col = cols.gen)
+#dev.off()
+
+# Density plot
+#tiff("plots/kw_popan_gen_densityplot.tiff", units="in", width=8, height=5, res=400)
+mcmcplots::denplot(kw_popan_gen.mcmc, parms = c("Nsuper", "mean.lambda", "deviance", "mean.phi"), style = "plain", col = cols.gen)
+#dev.off()
+```
 
