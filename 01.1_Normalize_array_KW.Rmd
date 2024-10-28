@@ -20,16 +20,16 @@ https://bioconductor.org/packages/devel/bioc/vignettes/minfi/inst/doc/minfi.html
 
 Install libraries and prep workspace: 
 ```{r, echo = TRUE, message = FALSE, results = 'hide', warning = FALSE}
-rm(list=ls())       
+#rm(list=ls())       
 
 setwd("~/Documents/Master's/Analysis/Epigenetic Aging/Killer Whales")
 
 # Install packages "sesame" and "minfi" from Bioconductor: 
 # BiocManager::install("sesame")
 # BiocManager::install("minfi")
-#install.packages("SeSaMeRpackages/sesame_1.3.0.tar.gz", repos=NULL, type="source")
-#install.packages("SeSaMeRpackages/HorvathMammalMethylChip40manifest_0.2.2.tar.gz", repos=NULL, type="source")
-#install.packages("SeSaMeRpackages/HorvathMammalMethylChip40anno.test.unknown_0.2.2.tar.gz", repos=NULL, type="source")
+# install.packages("SeSaMeRpackages/sesame_1.3.0.tar.gz", repos=NULL, type="source")
+# install.packages("SeSaMeRpackages/HorvathMammalMethylChip40manifest_0.2.2.tar.gz", repos=NULL, type="source")
+# install.packages("SeSaMeRpackages/HorvathMammalMethylChip40anno.test.unknown_0.2.2.tar.gz", repos=NULL, type="source")
 
 library(tidyverse)
 library(sesame)
@@ -46,11 +46,10 @@ options(scipen=999)
 Load sample sheets and Sesame manifest file: 
 ```{r}
 # Sample list from array run in Meaghan Jones' lab: 
-sample_file_Jones     <- read.csv("Input/sample_list_whales_updated_Nov2023.csv")
+sample_file_Jones     <- read.csv("Input/sample_list_whales_updated_Feb2024.csv")
 
 # Sample list from array run in the Horvath lab: 
-sample_file_Horvath   <- 
-read.csv("Input/sample_list_whales_HORVATH_updated_Nov2023.csv") 
+sample_file_Horvath   <- read.csv("Input/sample_list_whales_HORVATH_updated_Feb2024.csv") 
 
 # Manifest file: 
 manifest_file         <- read.csv("HorvathMammal40.CanonicalManifest.3.2019.sesame.csv")
@@ -138,7 +137,7 @@ sample_sheet_Jones2 <- sample_sheet_Jones %>%
 # Select required columns:
 sample_sheet_Horvath2 <- sample_sheet_Horvath %>% 
   # rename columns to match Jones sample sheet:
-  dplyr::rename(Order = OriginalOrderInBatch, sampleId = ExternalSampleID, block = Block, Species = SpeciesCommonName, plate = PlateNumber, Sex = microsatSex) %>% 
+  dplyr::rename(Order = OriginalOrderInBatch, sampleId = ExternalSampleID, block = Block, Species = SpeciesCommonName, plate = PlateNumber) %>% 
   # Change values in 'plate' column to 3
   mutate(plate = 3) %>% 
   # Select columns:
@@ -188,10 +187,14 @@ df_qc <- as.data.frame(qc)
 
 ggplot(data = df_qc, aes(x = mMed, y = uMed, label = rownames(df_qc))) + 
   geom_point() + 
-  geom_text(size = 2, hjust = -0.1) +
+  geom_text(size = 3, hjust = -0.1) +
   theme_bw() + 
   xlab("Meth median intensity (log2)") + 
-  ylab("Unmeth median intensity (log2)")
+  ylab("Unmeth median intensity (log2)") + 
+  theme(axis.title = element_text(size = 16),
+        axis.text = element_text(size = 14))
+
+# ggsave("Plots/qc_plot_w_outliers.png", width = 6, height = 4.5, dpi = 300)
 ```
 
 A few outliers here. 
@@ -249,6 +252,8 @@ ggplot(data = df_qc_outliersRemoved, aes(x = mMed, y = uMed, label = rownames(df
   theme_bw() + 
   xlab("Meth median intensity (log2)") + ylab("Unmeth median intensity (log2)")
 
+# ggsave("Plots/qc_plot_wo_outliers.png", width = 6, height = 4.5, dpi = 300)
+
 # Beta density plot:
 densityPlot(Mset_outliersRemoved)
 
@@ -264,18 +269,37 @@ There are a few hanging out near the bottom still:
 
 The beta density plot looks better, but can see that there is one a little off, hanging below around beta ~ 0.1. We will leave these samples in for now, but be conscious of how they might affect normalization.
 
-Call getBeta on Mset to return a data frame of normalized beta values for each CG Sse:
+We can also look for p-values to try and detect "bad" samples: 
+```{r}
+# Get raw betas 
+Rawset <- minfi::preprocessRaw(RGset_outliersRemoved)
+
+# Get QC for methylset
+QCset <- getQC(Rawset)
+
+# Get median unmethylated and methylated intensity (log2)
+QCdf <- data.frame(mMed = QCset$mMed, uMed = QCset$uMed)
+
+# Plot to see if there are outliers:
+ggplot(data = QCdf, aes(x = mMed, y = uMed, label = rownames(df_qc_outliersRemoved))) + 
+  geom_point() + 
+  geom_text(size = 2, hjust = -0.1) +
+  theme_bw() + 
+  xlab("mMed") + ylab("uMed")
+```
+
+Call getBeta on Mset to return a data frame of normalized beta values for each CG:
 ```{r}
 normalized_betas_minfi = as_tibble(minfi::getBeta(Mset_outliersRemoved), rownames="CGid")
 
 # Make sure that all beta values fall between 0 and 1
-max(normalized_betas_minfi[,2:100])
-min(normalized_betas_minfi[,2:100])
+max(normalized_betas_minfi[,2:ncol(normalized_betas_minfi)])
+min(normalized_betas_minfi[,2:ncol(normalized_betas_minfi)])
 ```
 
 Save normalized betas: 
 ```{r}
-#saveRDS(normalized_betas_minfi, 'output/nbetas_combined_KillerWhale_array.rds')
+#saveRDS(normalized_betas_minfi, 'output/nbetas_combined_KillerWhale_array_August2024.rds')
 ```
 
 ### 4. Create transposed dataset of beta values: 
@@ -295,12 +319,17 @@ colnames(n_betas_t) <- normalized_betas_minfi$CGid
 
 Save transposed betas and update the sample sheet for clock processing. 
 ```{r}
-#saveRDS(n_betas_t, 'output/tbetas_combined_KillerWhale_array.rds')
+#saveRDS(n_betas_t, 'output/tbetas_combined_KillerWhale_array_August2024.rds')
+
+#n_betas_t <- readRDS("output/tbetas_combined_KillerWhale_array_August2024.rds")
+#head(n_betas_t)
 ```
 
 Save sample sheet: 
 ```{r}
 #saveRDS(sample_sheet_outliersRemoved, 'output/updated_sample_sheet_combined_KillerWhale_array.rds')
+
+#sample_sheet_outliersRemoved <- readRDS("output/updated_sample_sheet_combined_KillerWhale_array.rds")
 ```
 
 Run PCA to check out the methylation data (exploratory): 
@@ -309,9 +338,10 @@ library(ggplot2)
 library(ggfortify)
 library(stats)
 
-pca_methylData <- prcomp(n_betas_t[,1:26126])
+dim(n_betas_t)
+pca_methylData <- prcomp(n_betas_t[,1:37492])
 autoplot(pca_methylData, 
-         #dim(label = TRUE
+         #dim(label = TRUE)
          )
 ```
 
@@ -331,20 +361,12 @@ kw_pca_data <- n_betas_t %>%
 # Run PCA
 pca_kw <- prcomp(kw_pca_data[,1:37492]) 
 
-# Plot with colours for chip number 
-autoplot(pca_kw, data = kw_pca_data, colour = "chip.id", label = TRUE, shape = FALSE) 
-
-# Plot with colours for plate 
-autoplot(pca_kw, data = kw_pca_data, colour = "plate", label = TRUE, shape = FALSE)
-
-# Plot with colours for location 
-autoplot(pca_kw, data = kw_pca_data, colour = "Location", label = TRUE, shape = FALSE, frame = TRUE)
-
-# Plot with colours for sex 
-autoplot(pca_kw, data = kw_pca_data, colour = "Sex", label = TRUE, shape = FALSE, frame = TRUE)
-
-# Plot with colours for lab 
-autoplot(pca_kw, data = kw_pca_data, colour = "lab", label = TRUE, shape = FALSE, frame = TRUE)
+# Plot with colours for chip number, plate, location, sex, lab 
+autoplot(pca_kw, 
+         data = kw_pca_data, 
+         colour = kw_pca_data$Year,
+         label = TRUE, 
+         shape = FALSE) 
 ```
 
 #### Heat Scree Plot
@@ -352,6 +374,8 @@ We can use a heat scree plot to look at the influence of specific technical vari
 
 Source the function code (from Sam Lee in Jones Lab) and prep the PCA (adapted from Sam's code: 11_2022-09-27_CHILD_NO2_postnatal_dnam_limma_nameans_nocombat_SVs.Rmd):
 ```{r, warning = FALSE}
+#normalized_betas_minfi <- readRDS("output/nbetas_combined_KillerWhale_array_August2024.rds")
+
 source('2021-09-14_heat_scree_plot.R')
 
 # PCA
@@ -393,6 +417,8 @@ before <- heat_scree_plot(Loadings = Loadings,
 before
 ```
 
+We can see the technical variables of chip ID, Lab, and column may be influencing the data. Let's start by correcting for lab.
+
 Combat batch correction for lab: 
 ```{r, warning = FALSE}
 library(sva)
@@ -432,10 +458,12 @@ after_lab <- heat_scree_plot(Loadings = Loadings_lab,
 after_lab
 ```
 
-Combat batch correction for chip.id: 
+Combat batch correction for chip: 
 ```{r, warning = FALSE}
+library(sva)
+
 combat_lab_chip <- ComBat(dat = combat_lab,
-                          batch = kw_pca_data$chip.id)
+                     batch = kw_pca_data$chip.id)
 # need a model matrix here?
 
 # Now re-run heat scree plot: 
@@ -472,8 +500,7 @@ after_lab_chip
 Combat batch correction for row: 
 ```{r, warning = FALSE}
 combat_lab_chip_row <- ComBat(dat = combat_lab_chip,
-                          batch = kw_pca_data$row)
-# need a model matrix here?
+                              batch = kw_pca_data$row)
 
 # Now re-run heat scree plot: 
 # PCA of scaled DNAm data: 
@@ -519,11 +546,5 @@ n_betas_corrected <- combat_lab_chip_row %>%
 colnames(n_betas_corrected) <- normalized_betas_minfi$CGid
 
 # Export as .rds
-#saveRDS(n_betas_corrected, 'output/tbetas_corrected_combined_KillerWhale_array.rds')
+saveRDS(n_betas_corrected, 'output/tbetas_corrected_combined_KillerWhale_array_August2024.rds')
 ```
-
-
-
-
-
-
