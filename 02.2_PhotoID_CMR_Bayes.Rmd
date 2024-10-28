@@ -4,16 +4,12 @@ date: "`r Sys.Date()`"
 output: pdf_document
 ---
 
-*** NOTE: this used to work but now I keep getting the error "Error in jags.model... Invalid parent values" when I try to run it and I can't figure out why because I don't think I changed anything 
-
-Here, we will re-analyze the photo-ID CMR data using a Bayesian hierarchichal state-space framework, as described in Kéry and Schaub (2011). See script 02.1_PhotoID_CMR for discussion of POPAN JS CMR assumptions.
+Here, we will re-analyze the photo-ID CMR data using a Bayesian hierarchichal state-space framework, as described in Kéry and Schaub (2011). 
 
 The script was obtained from https://github.com/oliviergimenez/bayes-multistate-jollyseber, modified for these data.
 
 Prep the environment: 
 ```{r, include = FALSE}
-rm(list=ls())
-
 setwd("~/Documents/Master's/Analysis/CMR")
 
 library(tidyverse)
@@ -22,6 +18,45 @@ library(RMark)
 library(R2jags)
 library(R2ucare)
 ```
+
+## POPAN Jolly-Seber
+
+Assumptions for Jolly-Seber Mark Recapture models: 
+1. Animals retain their tags throughout the experiment 
+
+2. Tags are read properly
+
+3. Sampling is instantaneous
+
+4. Survival probabilities are the same for all animals (marked and unmarked) between each pair of sampling occasions (homogenous survival)
+
+5. Catchability is the same for all animals (marked and unmarked) at each sampling occasion (homogenous catchability)
+
+6. The study area is constant
+
+
+In the case of killer whales, do we meet the assumptions?
+
+1. Yes - most nicks and scars used for ID are retained through the life of the animal.
+
+2. Yes - we can assume that identified individuals are re-identified reliably. However, there are ways to account for identification error - to be explored later. 
+
+3. Yes - sampling period is short (1 to a few days)
+
+4. Probably? - while survival probabilities might differ between sex and age classes, being "marked" does not affect an individual's survival
+
+5. Unlikely? - Equal catchability could be affected by: 
+    - Behaviour - some individuals/groups may be more likely to approach the boat, and thus we may get more/better photographs
+    - Individuals with more distinct markings may be more likely to be identified/re-identified when image quality is lower 
+    - Cooch and White (2014) describe this as the most critical assumption for JS models
+
+6. Sort of? - The study area includes locations around Northern Baffin Island (mainly Admiralty Inlet and Eclipse Sound) and Cumberland Sound, but we have not consistently sampled in each location each year 
+
+Here we estimate population size using a POPAN Jolly-Seber Mark Recapture Model. The POPAN formulation of the JS model is an open population model that implies the existence of a super-population consisting of all animals that would ever be born to the population. Parameter *b_i* (entry probability) represents the probability that an animal from they hypothetical super-population would enter the population between occasion *t* and *t+1*. Entry could result from recruitment or immigration. 
+
+The parameterization of the POPAN JS Model is as follows: 
+![POPAN Jolly Seber Parameterization](POPAN_JS_Parameterization.png)
+
 
 ## State-Space JS Model 
 *Notes from Kéry and Schaub (2011)*
@@ -69,6 +104,8 @@ $$
 
 We need to specify priors for survival, capture, entry, and inclusion probabilities. To express ignorance, specify a uniform prior U(0,1) on all of them. However, for entry probability (*b*) we use a Dirichlet prior (multinomial generalization of the beta distribution): *b_t* ~ Dirichlet($\alpha$), where . $\alpha$_t = 1 for all *t* (this allocates the entries of all individuals uniformly over the *T* occasions). The U(0,1) prior for inclusions probability $\psi$ induces a discrete U(0,*M*) prior for the superpopulation size *N_s*.
 
+***** DESCRIBE WHY WE DO THE DATA AUGMENTATION
+
 ## Application
 Now we can build our model using the superpopulation parameterization of JS in a Bayesian framework.
 
@@ -79,6 +116,8 @@ We have modified the original code obtained from https://github.com/oliviergimen
 Further, we have included the population growth rate ($\lambda$) computed as a derived quantity from the estimated population sizes or survival and per-capita entry probability:
 
 $$\lambda_t = \frac{N_{t+1}}{N_t} = \phi_t + f_t$$
+
+To determine the "average" lambda over the study period, we calculate the geometric mean of the annual lambda, as suggested by Cooch & White (2021; http://www.phidot.org/software/mark/docs/book/pdf/chap13.pdf#page=18).
 
 POPAN parameterization of data:
 ```{r}
@@ -95,7 +134,6 @@ popan <- function() {
   } #i
   
   mean.phi ~ dunif(0, 1)  # Prior for mean survival - uniform distribution with min = 0 and max = 1
-  #mean.phi ~ dnorm(0.8, 0.3)  # Prior for mean survival - normal distribution with mean = 0.8, sd = 0.3
   psi ~ dunif(0, 1) # Prior for inclusion probability
   
   for(t in 1:n.occasions) {
@@ -155,12 +193,12 @@ popan <- function() {
     Nind[i] <- sum(u[i,1:n.occasions])
     Nalive[i] <- 1 - equals(Nind[i], 0)
   } #i
-  for (t in 1:(n.occasions-2)) {
-    lambda[t] <- N[t+1]/N[t] # Lambda realized population growth rate
+  for (t in 1:(n.occasions-1)) {
+    lambda[t] <- N[t+1]/N[t] # Lambda realized annual population growth rate
     f[t] <- B[t+1]/N[t] # recruitment (per capita entry) rate
   } #t
   Nsuper <- sum(Nalive[]) # Superpopulation size
-  mean.lambda <- mean(lambda[]) # mean realized growth rate
+  mean.lambda <- prod(lambda[])^(1/(n.occasions-1)) # geometric mean realized growth rate 
 }
 ```
 
@@ -170,15 +208,38 @@ popan <- function() {
 
 Now let's apply it to our data. 
 
-Ungroup the data:
+Load and format the photo-ID capture history data:
 ```{r}
+# Load data and insert zeros instead of NAs in years where there are no sightings: 
+CMR_data <- read.csv("photo_CMR_data_final.csv", header = TRUE)
+CMR_data[is.na(CMR_data)] <- 0
+
+# Remove the id column and add a new column for CH data:
+CMR_data <- CMR_data %>% 
+  select(-ID) %>% 
+  mutate(cmr = NA) %>% 
+  relocate(cmr, "X2009")
+
+# Creating a column with 1s and 0s for all years observed: 
+for (i in 1:nrow(CMR_data)){
+  CMR_data[i,1] <- paste(CMR_data[i,2], CMR_data[i,3], CMR_data[i,4], CMR_data[i,5], CMR_data[i,6],CMR_data[i,7],
+                         CMR_data[i,8], CMR_data[i,9], CMR_data[i,10], CMR_data[i,11], CMR_data[i,12], CMR_data[i,13],
+                         CMR_data[i,14], CMR_data[i,15], CMR_data[i,16], sep = "")}
+
+# Select first column only, rename, and save to txt file
+CMR <- CMR_data %>% 
+  select(cmr) %>% 
+  dplyr::rename(ch = cmr) %>% 
+  write.table(file = "_photo_CMR_data.txt", row.names = FALSE, quote = FALSE)
+
+# Re-import and split data
 ch_CMR <- import.chdata("_photo_CMR_data.txt")
 popan_ch <- splitCH(ch_CMR$ch)
 ```
 
 Augment the observed capture histories by nz pseudo-individuals, all with capture histories of 0: 
 ```{r}
-nz <- 300     # Augmenting the data by 300 pseudo-individuals
+nz <- 200     # Augmenting the data by 200 pseudo-individuals, approx. equal to population size
 CH.aug <- rbind(popan_ch, matrix(0, ncol = dim(popan_ch)[2], nrow = nz))
 ```
 
@@ -187,10 +248,6 @@ Bundle data.
 bugs.data <- list(y = CH.aug, 
                   n.occasions = dim(CH.aug)[2], 
                   M = dim(CH.aug)[1])
-
-# Would sometimes get an error for "Invalid parent values" - this is  fix for that. 
-bugs.data$y[1] <- 1
-# This worked once and hasn't since...
 ```
 
 We use the same initial values as presented by Schaub & Kéry (2011).
@@ -215,12 +272,12 @@ parameters <- c("psi", "p.time", "mean.phi", "b", "Nsuper", "N", "B", "nu", "lam
 
 MCMC settings.
 ```{r}
-n.iter   <- 40000     # Number of iterations
+n.iter   <- 50000     # Number of iterations
 n.burnin <- 10000      # Number discarded (burn-in)
 n.chains <- 3         # Number of chains
 ```
 
-Call Jags.
+Call Jags - run model on bio server.
 ```{r}
 kw_popan <- jags(data = bugs.data,
                      inits = inits,
@@ -232,41 +289,38 @@ kw_popan <- jags(data = bugs.data,
 kw_popan
 ```
 
-Rhat is the potential scale reduction factor, a convergence diagnostic (Gelman-Rubin diagnostic: at convergence, Rhat=1). The rule of thumb is that all Rhat values should be <1.1.
+```{r}
+# Save run: 
+#saveRDS(kw_popan, "output/kw_popan_results_sept2024_run2_3.rds") 
 
-A handful of Rhat values remain above 1.1. Longer burn-in or more iterations?
+# Load results
+kw_popan <- readRDS("output/kw_popan_results_sept2024_run2_3.rds")
+```
 
+
+# Model evaluation 
+
+Rhat is the potential scale reduction factor, a convergence diagnostic (Gelman-Rubin diagnostic: at convergence, Rhat=1). The general rule is that all Rhat values should be <1.1, which they are above.
 
 ```{r}
 library(mcmcplots)
-kw_popan.mcmc <- as.mcmc(kw_popan)
-
-plot(kw_popan)
-
-# Traceplot
-mcmcplots::traplot(kw_popan.mcmc, parms = c("Nsuper", "deviance", "mean.p", "mean.phi", "lambda"), style = "plain") 
-
-# Density plot
-mcmcplots::denplot(kw_popan.mcmc, parms = c("Nsuper", "deviance", "mean.p", "mean.phi", "lambda"), style = "plain")
-
-# Autocorrelation plot
-mcmcplots::autplot1(kw_popan.mcmc, chain = 1, style = "plain")
-# Should we thin the samples?
-```
-
-
-A bit lost with what other model evaluation steps need to be completed for this type of analysis... tried to do a posterior predictive check but coda.samples not working since I called "jags" for the model instead of "jags.model". Will have to figure out another way.
-```{r, fig.height = 9, fig.width = 15}
 library(coda)
 
-gelman.plot(kw_popan.mcmc)
+# Convert to mcmc output as object for diagnostic plots
+kw_popan.mcmc <- as.mcmc(kw_popan)
+
+# save mcmc object
+#saveRDS(kw_popan.mcmc, "output/kw_popan_mcmc_sept2024_run2_3.rds")
+
+cols <- c("#274a66", "#4785b8", "#83b4dc")
+
+# Traceplot - to visually assess convergence between plots
+#tiff("plots/kw_popan_traceplot.tiff", units="in", width=8, height=5, res=400)
+mcmcplots::traplot(kw_popan.mcmc, parms = c("Nsuper", "mean.lambda", "deviance", "mean.phi"), style = "plain", col = cols) 
+#dev.off()
+
+# Density plot - sampling density of the three chains from the posterior distribution
+#tiff("plots/kw_popan_densityplot.tiff", units="in", width=8, height=5, res=400)
+mcmcplots::denplot(kw_popan.mcmc, parms = c("Nsuper", "mean.lambda", "deviance", "mean.phi"), style = "plain", col = cols)
+#dev.off()
 ```
-
-
-
-
-
-
-
-
-
